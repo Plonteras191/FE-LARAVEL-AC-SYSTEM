@@ -1,0 +1,358 @@
+/* Main Container Styles */
+.booking-container {
+  padding: 60px 20px;
+  max-width: 800px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+}
+
+.booking-container h2 {
+  color: #1a73e8;
+  font-size: 2rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+/* Booking Box with Card Style */
+.booking-box {
+  background-color: #fff;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  margin-top: 20px;
+}
+
+/* Form Section Styling */
+.form-section {
+  margin-bottom: 35px;
+  padding-bottom: 25px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.form-section:last-of-type {
+  border-bottom: none;
+}
+
+.form-section h3 {
+  color: #1a73e8;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+  padding-bottom: 8px;
+  position: relative;
+}
+
+.form-section h3:after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 40px;
+  height: 3px;
+  background-color: #1a73e8;
+  border-radius: 2px;
+}
+
+.section-hint {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+}
+
+/* Input Field Styling */
+.input-group {
+  margin-bottom: 20px;
+}
+
+.input-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #444;
+}
+
+.required {
+  color: #e53935;
+  margin-left: 3px;
+}
+
+input[type="text"],
+input[type="tel"],
+input[type="email"],
+.date-input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background-color: #f9fafc;
+}
+
+input[type="text"]:focus,
+input[type="tel"]:focus,
+input[type="email"]:focus,
+.date-input:focus {
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
+  outline: none;
+  background-color: #fff;
+}
+
+input::placeholder {
+  color: #aaa;
+}
+
+/* Checkbox Styling */
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  cursor: pointer;
+  font-size: 1rem;
+  position: relative;
+  padding-left: 35px;
+  user-select: none;
+}
+
+.checkbox-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkbox-container .checkbox-label {
+  position: relative;
+}
+
+.checkbox-container:before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #bbb;
+  border-radius: 5px;
+  background-color: #fff;
+  transition: all 0.2s ease;
+}
+
+.checkbox-container input:checked ~ .checkbox-label:before {
+  content: '';
+  position: absolute;
+  left: -35px;
+  top: 0;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #1a73e8;
+  border-radius: 5px;
+  background-color: #1a73e8;
+}
+
+.checkbox-container input:checked ~ .checkbox-label:after {
+  content: '';
+  position: absolute;
+  left: -30px;
+  top: 5px;
+  width: 6px;
+  height: 11px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Service Options Styling */
+.service-options, .ac-type-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 15px;
+}
+
+/* Date Picker Styling */
+.service-dates {
+  margin-top: 25px;
+  padding: 20px;
+  background-color: #f9fafc;
+  border-radius: 8px;
+  border-left: 4px solid #1a73e8;
+}
+
+.date-picker-group {
+  margin-bottom: 15px;
+}
+
+.date-picker-group:last-child {
+  margin-bottom: 0;
+}
+
+.date-picker-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #444;
+}
+
+.date-input {
+  cursor: pointer;
+}
+
+/* Custom Calendar Styling */
+.custom-calendar {
+  border: none !important;
+  border-radius: 10px !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1) !important;
+  padding: 10px !important;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+}
+
+.custom-calendar .react-datepicker__header {
+  background-color: #1a73e8 !important;
+  border-bottom: none !important;
+  border-top-left-radius: 10px !important;
+  border-top-right-radius: 10px !important;
+  padding-top: 15px !important;
+  position: relative !important;
+}
+
+.custom-calendar .react-datepicker__month {
+  margin: 10px !important;
+}
+
+.custom-calendar .react-datepicker__day-name,
+.custom-calendar .react-datepicker__day {
+  width: 2rem !important;
+  line-height: 2rem !important;
+  margin: 0.2rem !important;
+}
+
+.custom-calendar .react-datepicker__current-month {
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.custom-calendar .react-datepicker__day-name {
+  color: white !important;
+}
+
+.custom-calendar .react-datepicker__day--selected,
+.custom-calendar .react-datepicker__day--keyboard-selected {
+  background-color: #1a73e8 !important;
+  border-radius: 50% !important;
+  color: #fff !important;
+}
+
+.custom-calendar .react-datepicker__day:hover {
+  background-color: #e6effd !important;
+  border-radius: 50% !important;
+}
+
+.custom-calendar .react-datepicker__day--disabled {
+  color: #ccc !important;
+}
+
+/* Submit Button Styling */
+.form-submit {
+  text-align: center;
+  margin-top: 30px;
+}
+
+button[type="submit"] {
+  background-color: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  padding: 14px 32px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
+}
+
+button[type="submit"]:hover {
+  background-color: #0d62c7;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(26, 115, 232, 0.4);
+}
+
+button[type="submit"]:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(26, 115, 232, 0.3);
+}
+
+/* Responsive Design Adjustments */
+@media (max-width: 768px) {
+  .booking-box {
+    padding: 25px 20px;
+  }
+  
+  .service-options, .ac-type-options {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  button[type="submit"] {
+    width: 100%;
+  }
+}
+
+/* Additional styles for Admin Booking */
+.admin-booking h2 {
+  color: #2e7d32; /* Green color for admin interface */
+}
+
+.admin-booking .form-section h3:after {
+  background-color: #2e7d32; /* Green underline for admin section headers */
+}
+
+.admin-booking .form-section h3 {
+  color: #2e7d32; /* Green section headers */
+}
+
+.admin-booking button[type="submit"] {
+  background-color: #2e7d32; /* Green submit button */
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+}
+
+.admin-booking button[type="submit"]:hover {
+  background-color: #1b5e20; /* Darker green on hover */
+  box-shadow: 0 6px 18px rgba(46, 125, 50, 0.4);
+}
+
+.admin-booking button[type="submit"]:active {
+  box-shadow: 0 2px 8px rgba(46, 125, 50, 0.3);
+}
+
+.admin-booking .checkbox-container input:checked ~ .checkbox-label:before {
+  border-color: #2e7d32;
+  background-color: #2e7d32;
+}
+
+.admin-booking .service-dates {
+  border-left: 4px solid #2e7d32;
+}
+
+/* Custom Calendar for Admin */
+.admin-booking .custom-calendar .react-datepicker__header {
+  background-color: #2e7d32 !important;
+}
+
+.admin-booking .custom-calendar .react-datepicker__day--selected,
+.admin-booking .custom-calendar .react-datepicker__day--keyboard-selected {
+  background-color: #2e7d32 !important;
+}
+
+/* Focus state for admin input fields */
+.admin-booking input[type="text"]:focus,
+.admin-booking input[type="tel"]:focus,
+.admin-booking input[type="email"]:focus,
+.admin-booking .date-input:focus {
+  border-color: #2e7d32;
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15);
+}

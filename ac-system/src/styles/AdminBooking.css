@@ -1,0 +1,56 @@
+/* src/styles/AdminBooking.css */
+.admin-booking-container {
+    padding: 40px;
+    max-width: 800px;
+    margin: 20px auto;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  
+  .admin-booking-container h2 {
+    text-align: center;
+    color: #007BFF;
+    margin-bottom: 20px;
+  }
+  
+  .admin-booking-form .form-group {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .admin-booking-form label {
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+  
+  .admin-booking-form input[type="text"],
+  .admin-booking-form input[type="tel"],
+  .admin-booking-form select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  .radio-group {
+    display: flex;
+    gap: 15px;
+  }
+  
+  .admin-booking-submit {
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: block;
+    margin: 20px auto 0;
+    transition: background-color 0.3s;
+  }
+  
+  .admin-booking-submit:hover {
+    background-color: #0056b3;
+  }
+  

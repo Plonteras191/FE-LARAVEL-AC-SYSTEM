@@ -1,0 +1,44 @@
+/* src/styles/CallUs.css */
+.callus-container {
+    padding: 50px;
+    max-width: 600px;
+    margin: 120px auto 50px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    text-align: center;
+  }
+  
+  .callus-container h2 {
+    color: #007BFF;
+    margin-bottom: 20px;
+  }
+  
+  .callus-container p {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+  }
+  
+  .phone-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 20px 0;
+    color: #007BFF;
+  }
+  
+  .call-button {
+    padding: 12px 20px;
+    background-color: #007BFF;
+    color: #fff;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s, transform 0.3s;
+  }
+  
+  .call-button:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+  }
+  

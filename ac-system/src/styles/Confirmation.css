@@ -1,0 +1,158 @@
+.confirmation-container {
+  padding: 40px 20px;
+  max-width: 800px;
+  margin: 40px auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.confirmation-box {
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 30px;
+}
+
+.confirmation-container h2 {
+  color: #007BFF;
+  margin-bottom: 20px;
+  font-size: 2rem;
+  text-align: center;
+}
+
+.confirmation-message {
+  text-align: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.confirmation-message p {
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.booking-summary {
+  margin: 20px 0;
+}
+
+.booking-summary h3 {
+  color: #333;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.summary-section {
+  margin-bottom: 25px;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.summary-section h4 {
+  color: #007BFF;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 8px;
+}
+
+.personal-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.personal-info li {
+  margin-bottom: 8px;
+  display: flex;
+  align-items: flex-start;
+}
+
+.personal-info li span {
+  font-weight: bold;
+  margin-right: 10px;
+  min-width: 60px;
+}
+
+.location-info p {
+  margin: 0;
+  color: #333;
+}
+
+.service-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.service-item {
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.service-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  border-bottom: 1px dashed #eee;
+  padding-bottom: 8px;
+}
+
+.service-type {
+  font-weight: bold;
+  color: #007BFF;
+}
+
+.service-date {
+  color: #666;
+}
+
+.service-ac-types {
+  font-size: 0.9rem;
+}
+
+.service-ac-types span {
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+.actions {
+  text-align: center;
+  margin-top: 30px;
+}
+
+.primary-button {
+  padding: 14px 30px;
+  background-color: #007BFF;
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+.primary-button:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+}
+
+@media screen and (max-width: 600px) {
+  .confirmation-container {
+    padding: 20px 15px;
+    margin: 20px auto;
+  }
+  
+  .confirmation-box {
+    padding: 20px 15px;
+  }
+  
+  .service-header {
+    flex-direction: column;
+    gap: 5px;
+  }
+}

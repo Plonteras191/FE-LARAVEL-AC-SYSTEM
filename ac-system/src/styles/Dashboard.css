@@ -1,0 +1,116 @@
+/* src/styles/Dashboard.css */
+
+.dashboard-main {
+    padding: 30px;
+    margin: 0 auto; 
+    background-color: #f0f2f5;
+    min-height: 100vh;
+    transition: margin 0.3s ease-in-out;
+    font-family: Arial, sans-serif;
+    width: 650px; 
+  }
+  
+  .dashboard-main h1 {
+    color: #007BFF;
+    margin-bottom: 10px;
+    text-align: left;
+    margin-left: -60px;
+  }
+  
+  .dashboard-main p {
+    text-align: center;
+    color: #333;
+    font-size: 1rem;
+    margin-bottom: 20px;
+  }
+  
+  .dashboard-section {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px auto; 
+    width: 1200px; 
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-left: -270px;
+  }
+  
+  .dashboard-section h3 {
+    color: #007BFF;
+    margin-bottom: 15px;
+    text-align: left;
+  }
+  
+  
+  .appointment-box {
+    overflow-x: auto;
+    padding: 10px;
+    width: 100%;
+    
+  }
+  
+  
+  .appointments-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+    min-width: 800px;
+     
+  }
+  
+  .appointments-table th,
+  .appointments-table td {
+    padding: 12px;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .appointments-table th {
+    background-color: #007BFF;
+    color: #fff;
+  }
+  
+  .appointments-table tr:hover {
+    background-color: #f9f9f9;
+  }
+  
+  /* Complete Button */
+  .complete-button {
+    background-color: #007bff;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s ease;
+  }
+  
+  .complete-button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 1200px) {
+    .dashboard-main {
+      width: 100%;
+      padding: 20px;
+    }
+    .dashboard-section {
+      width: 100%;
+      padding: 15px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .dashboard-main {
+      width: 100%;
+      padding: 20px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .dashboard-main {
+      padding: 20px;
+    }
+  }
+  

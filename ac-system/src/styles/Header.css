@@ -1,0 +1,90 @@
+:root {
+    --primary-color: #333;
+    --accent-color: #007bff;
+    --bg-color: #fefffa;
+    --header-padding: 20px 40px;
+    --header-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  body {
+    margin: 0;
+    font-family: 'Montserrat', sans-serif;
+  }
+  
+  
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.5);
+    padding: var(--header-padding);
+    box-shadow: var(--header-shadow);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  
+  /* Logo Styling */
+  .logo {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    font-style: italic;
+  }
+  
+  .logo-icon {
+    margin-right: 8px;
+    color: var(--accent-color);
+    font-size: 1.8rem;
+  }
+  
+  /* Navigation Styling */
+  nav ul {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+    margin: 0;
+    padding: 0;
+  }
+  
+  nav ul li a {
+    text-decoration: none;
+    color: var(--primary-color);
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: color 0.3s ease, text-shadow 0.3s ease, background-color 0.3s ease;
+  }
+  
+  /* Hover Effect */
+  nav ul li a:hover {
+    text-shadow: 0 0 8px rgba(203, 208, 214, 0.8);
+    color: var(--accent-color);
+    background-color: rgba(0, 123, 255, 0.05);
+  }
+  
+  /* Active Link Styling */
+  nav ul li a.active {
+    text-shadow: 0 0 10px rgba(205, 213, 222, 0.8);
+    color: var(--accent-color);
+    border-bottom: 2px solid var(--accent-color);
+  }
+  
+  /* Responsive Styling for Smaller Screens */
+  @media (max-width: 768px) {
+    .header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    nav ul {
+      flex-direction: column;
+      width: 100%;
+    }
+    
+    nav ul li {
+      margin-bottom: 10px;
+    }
+  }
+  
