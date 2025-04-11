@@ -2,25 +2,33 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../styles/RevenueHistory.css';
 
+// Base URL for Laravel API
+const API_BASE_URL = 'http://localhost:8000/api';
+
 const RevenueHistory = () => {
   const [history, setHistory] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load revenue history from the backend API on component mount
+  // Load revenue history from the Laravel backend API
   useEffect(() => {
-    axios.get("http://localhost/AC-SERVICE-FINAL/backend/api/getRevenueHistory.php")
+    setIsLoading(true);
+    axios.get(`${API_BASE_URL}/revenue-history`)
       .then(response => {
-        setHistory(response.data);
-        
-        // Calculate total amount
-        const total = response.data.reduce((sum, entry) => {
-          return sum + parseFloat(entry.total_revenue);
-        }, 0);
-        setTotalAmount(total);
+        if (response.data.history) {
+          setHistory(response.data.history);
+          setTotalAmount(parseFloat(response.data.totalAmount) || 0);
+        } else {
+          setHistory([]);
+          setTotalAmount(0);
+        }
+        setIsLoading(false);
       })
       .catch(error => {
         console.error("Error fetching revenue history:", error);
         setHistory([]);
+        setTotalAmount(0);
+        setIsLoading(false);
       });
   }, []);
 
@@ -32,7 +40,11 @@ const RevenueHistory = () => {
       </div>
       
       <div className="revenue-history-box">
-        {history.length === 0 ? (
+        {isLoading ? (
+          <div className="loading-message">
+            <p>Loading revenue history...</p>
+          </div>
+        ) : history.length === 0 ? (
           <div className="no-data-message">
             <div className="empty-state-icon">📊</div>
             <p>No revenue history available.</p>
@@ -49,8 +61,8 @@ const RevenueHistory = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {history.map((entry, index) => (
-                    <tr key={index}>
+                  {history.map((entry) => (
+                    <tr key={entry.id}>
                       <td className="date-column">{entry.revenue_date}</td>
                       <td className="amount-column">₱ {parseFloat(entry.total_revenue).toFixed(2)}</td>
                     </tr>

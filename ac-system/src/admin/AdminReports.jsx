@@ -3,6 +3,9 @@ import axios from 'axios';
 import { FaCheckCircle, FaClock, FaChartLine, FaCalendarAlt } from 'react-icons/fa';
 import '../styles/AdminReports.css';
 
+// Base URL for Laravel API
+const API_BASE_URL = 'http://localhost:8000/api';
+
 const AdminReports = () => {
   const [appointments, setAppointments] = useState([]);
   const [revenueHistory, setRevenueHistory] = useState([]);
@@ -11,8 +14,9 @@ const AdminReports = () => {
 
   useEffect(() => {
     setIsLoading(true);
-    // Fetch appointments (all)
-    axios.get("http://localhost/AC-SERVICE-FINAL/backend/api/appointments.php")
+    
+    // Fetch all appointments
+    axios.get(`${API_BASE_URL}/appointments`)
       .then(response => {
         let data = response.data;
         if (!Array.isArray(data)) data = [data];
@@ -23,62 +27,86 @@ const AdminReports = () => {
       });
 
     // Fetch revenue history from backend
-    axios.get("http://localhost/AC-SERVICE-FINAL/backend/api/getRevenueHistory.php")
+    axios.get(`${API_BASE_URL}/revenue-history`)
       .then(response => {
-        setRevenueHistory(response.data);
+        if (response.data && response.data.history) {
+          setRevenueHistory(response.data.history);
+        } else {
+          setRevenueHistory([]);
+        }
       })
       .catch(error => {
         console.error("Error fetching revenue history:", error);
+        setRevenueHistory([]);
       })
       .finally(() => {
         setIsLoading(false);
       });
   }, []);
 
-  // Filter appointments based on status.
+  // Filter appointments based on status
   const completeAppointments = appointments.filter(appt => 
     appt.status && appt.status.toLowerCase() === 'completed'
   );
+  
   const pendingAppointments = appointments.filter(appt => 
     !appt.status || appt.status.toLowerCase() === 'pending'
   );
   
-  // Group revenue history by month (e.g., "2025-04") and sum total revenue.
+  const acceptedAppointments = appointments.filter(appt => 
+    appt.status && appt.status.toLowerCase() === 'accepted'
+  );
+  
+  // Group revenue history by month and sum total revenue
   const groupRevenueByMonth = (history) => {
     const groups = {};
     history.forEach(entry => {
-      // Assume revenue_date is in 'YYYY-MM-DD' format; extract "YYYY-MM"
+      // Extract "YYYY-MM" from the date
       const month = entry.revenue_date.substring(0, 7);
       if (!groups[month]) {
         groups[month] = 0;
       }
       groups[month] += parseFloat(entry.total_revenue);
     });
-    // Convert the groups object into an array of { month, total } records
+    
+    // Convert to array and sort by month
     return Object.entries(groups)
       .map(([month, total]) => ({ month, total }))
-      .sort((a, b) => a.month.localeCompare(b.month)); // Sort by month
+      .sort((a, b) => a.month.localeCompare(b.month));
   };
 
   const revenueByMonth = groupRevenueByMonth(revenueHistory);
+  
+  // Calculate total revenue
+  const totalRevenue = revenueByMonth.reduce((sum, entry) => sum + entry.total, 0);
 
-  // Helper function to get appointment date.
+  // Helper function to parse services JSON string
+  const parseServices = (servicesStr) => {
+    try {
+      return JSON.parse(servicesStr);
+    } catch (error) {
+      console.error("Error parsing services:", error);
+      return [];
+    }
+  };
+
+  // Helper function to get appointment date from services
   const getAppointmentDate = (appt) => {
-    const date = appt.date || appt.complete_date || appt.created_at || 'N/A';
-    // Format date if it's not N/A
-    if (date !== 'N/A') {
-      try {
-        const formattedDate = new Date(date).toLocaleDateString('en-US', {
+    if (!appt.services) return 'N/A';
+    
+    try {
+      const services = parseServices(appt.services);
+      if (services.length > 0 && services[0].date) {
+        return new Date(services[0].date).toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
           day: 'numeric'
         });
-        return formattedDate;
-      } catch {
-        return date;
       }
+      return 'N/A';
+    } catch {
+      return 'N/A';
     }
-    return date;
   };
 
   // Format month for display (YYYY-MM to Month YYYY)
@@ -92,9 +120,6 @@ const AdminReports = () => {
     }
   };
 
-  // Calculate total revenue
-  const totalRevenue = revenueByMonth.reduce((sum, entry) => sum + entry.total, 0);
-
   if (isLoading) {
     return (
       <div className="admin-reports-container loading">
@@ -107,7 +132,7 @@ const AdminReports = () => {
   return (
     <div className="admin-reports-container">
       <div className="admin-header">
-        <h2>Admin Dashboard</h2>
+        <h2>Admin Reports</h2>
         <div className="date-display">
           <FaCalendarAlt /> {new Date().toLocaleDateString('en-US', {
             weekday: 'long', 
@@ -133,8 +158,8 @@ const AdminReports = () => {
             <FaClock />
           </div>
           <div className="stat-info">
-            <h3>{pendingAppointments.length}</h3>
-            <p>Pending</p>
+            <h3>{pendingAppointments.length + acceptedAppointments.length}</h3>
+            <p>Active</p>
           </div>
         </div>
         <div className="stat-card">
@@ -165,7 +190,7 @@ const AdminReports = () => {
           className={activeTab === 'pending' ? 'active' : ''} 
           onClick={() => setActiveTab('pending')}
         >
-          Pending Appointments
+          Active Appointments
         </button>
         <button 
           className={activeTab === 'revenue' ? 'active' : ''} 
@@ -207,31 +232,32 @@ const AdminReports = () => {
               </div>
             </div>
 
-            {/* Pending Appointments */}
+            {/* Active Appointments (Pending + Accepted) */}
             <div className="report-box pending">
-              <h3><FaClock className="report-icon" /> Pending Appointments</h3>
+              <h3><FaClock className="report-icon" /> Active Appointments</h3>
               <div className="scrollable-content">
-                {pendingAppointments.length > 0 ? (
+                {pendingAppointments.length + acceptedAppointments.length > 0 ? (
                   <ul>
-                    {pendingAppointments.slice(0, 5).map(app => (
+                    {[...pendingAppointments, ...acceptedAppointments].slice(0, 5).map(app => (
                       <li key={app.id} className="appointment-item">
                         <div className="appointment-header">
                           <span className="appointment-id">#{app.id}</span>
                           <span className="appointment-name">{app.name}</span>
+                          <span className="appointment-status">{app.status || 'Pending'}</span>
                         </div>
                         <div className="appointment-date">
                           <FaCalendarAlt /> {getAppointmentDate(app)}
                         </div>
                       </li>
                     ))}
-                    {pendingAppointments.length > 5 && (
+                    {pendingAppointments.length + acceptedAppointments.length > 5 && (
                       <button className="view-more" onClick={() => setActiveTab('pending')}>
-                        View all {pendingAppointments.length} appointments
+                        View all {pendingAppointments.length + acceptedAppointments.length} appointments
                       </button>
                     )}
                   </ul>
                 ) : (
-                  <div className="empty-state">No pending appointments.</div>
+                  <div className="empty-state">No active appointments.</div>
                 )}
               </div>
             </div>
@@ -270,19 +296,39 @@ const AdminReports = () => {
             <h3><FaCheckCircle className="report-icon" /> All Completed Appointments</h3>
             {completeAppointments.length > 0 ? (
               <div className="appointment-list">
-                {completeAppointments.map(app => (
-                  <div key={app.id} className="appointment-card">
-                    <div className="appointment-card-header">
-                      <span className="appointment-id">#{app.id}</span>
-                      <span className="status-badge completed">Completed</span>
+                {completeAppointments.map(app => {
+                  const services = parseServices(app.services);
+                  return (
+                    <div key={app.id} className="appointment-card">
+                      <div className="appointment-card-header">
+                        <span className="appointment-id">#{app.id}</span>
+                        <span className="status-badge completed">Completed</span>
+                      </div>
+                      <div className="appointment-card-body">
+                        <h4>{app.name}</h4>
+                        <p><strong>Contact:</strong> {app.phone} | {app.email || 'N/A'}</p>
+                        <p><strong>Address:</strong> {app.complete_address}</p>
+                        <div className="services-list">
+                          <p><strong>Services:</strong></p>
+                          {services.length > 0 ? (
+                            <ul>
+                              {services.map((service, idx) => (
+                                <li key={idx}>
+                                  {service.type} on {new Date(service.date).toLocaleDateString()} 
+                                  {service.ac_types && service.ac_types.length > 0 && (
+                                    <span> | AC Types: {service.ac_types.join(', ')}</span>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p>No service details available</p>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="appointment-card-body">
-                      <h4>{app.name}</h4>
-                      <p><FaCalendarAlt /> {getAppointmentDate(app)}</p>
-                      {app.service && <p className="service-type">{app.service}</p>}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="empty-state">No completed appointments found.</div>
@@ -292,25 +338,47 @@ const AdminReports = () => {
 
         {activeTab === 'pending' && (
           <div className="full-width-section">
-            <h3><FaClock className="report-icon" /> All Pending Appointments</h3>
-            {pendingAppointments.length > 0 ? (
+            <h3><FaClock className="report-icon" /> All Active Appointments</h3>
+            {pendingAppointments.length + acceptedAppointments.length > 0 ? (
               <div className="appointment-list">
-                {pendingAppointments.map(app => (
-                  <div key={app.id} className="appointment-card">
-                    <div className="appointment-card-header">
-                      <span className="appointment-id">#{app.id}</span>
-                      <span className="status-badge pending">Pending</span>
+                {[...pendingAppointments, ...acceptedAppointments].map(app => {
+                  const services = parseServices(app.services);
+                  return (
+                    <div key={app.id} className="appointment-card">
+                      <div className="appointment-card-header">
+                        <span className="appointment-id">#{app.id}</span>
+                        <span className={`status-badge ${app.status?.toLowerCase() || 'pending'}`}>
+                          {app.status || 'Pending'}
+                        </span>
+                      </div>
+                      <div className="appointment-card-body">
+                        <h4>{app.name}</h4>
+                        <p><strong>Contact:</strong> {app.phone} | {app.email || 'N/A'}</p>
+                        <p><strong>Address:</strong> {app.complete_address}</p>
+                        <div className="services-list">
+                          <p><strong>Services:</strong></p>
+                          {services.length > 0 ? (
+                            <ul>
+                              {services.map((service, idx) => (
+                                <li key={idx}>
+                                  {service.type} on {new Date(service.date).toLocaleDateString()} 
+                                  {service.ac_types && service.ac_types.length > 0 && (
+                                    <span> | AC Types: {service.ac_types.join(', ')}</span>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p>No service details available</p>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="appointment-card-body">
-                      <h4>{app.name}</h4>
-                      <p><FaCalendarAlt /> {getAppointmentDate(app)}</p>
-                      {app.service && <p className="service-type">{app.service}</p>}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
-              <div className="empty-state">No pending appointments found.</div>
+              <div className="empty-state">No active appointments found.</div>
             )}
           </div>
         )}

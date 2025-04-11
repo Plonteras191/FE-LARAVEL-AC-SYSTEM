@@ -9,7 +9,7 @@ const API_BASE_URL = 'http://localhost:8000/api';
 const Dashboard = () => {
   const [acceptedAppointments, setAcceptedAppointments] = useState([]);
 
-  useEffect(() => {
+  const fetchAppointments = () => {
     axios.get(`${API_BASE_URL}/appointments`)
       .then(response => {
         let data = response.data;
@@ -21,6 +21,10 @@ const Dashboard = () => {
         setAcceptedAppointments(accepted);
       })
       .catch(error => console.error("Error fetching appointments:", error));
+  };
+
+  useEffect(() => {
+    fetchAppointments();
   }, []);
 
   // Complete appointment: update its status to "Completed"
@@ -28,15 +32,20 @@ const Dashboard = () => {
     axios.post(`${API_BASE_URL}/appointments/${id}?action=complete`)
       .then(response => {
         const updatedAppointment = response.data;
-        // Store the completed appointment in localStorage for later processing
+        
+        // Store the completed appointment in localStorage for later processing in Revenue component
         const stored = localStorage.getItem('completedAppointments');
         const completedAppointments = stored ? JSON.parse(stored) : [];
-        completedAppointments.push(updatedAppointment);
-        localStorage.setItem('completedAppointments', JSON.stringify(completedAppointments));
+        
+        // Check if this appointment is already in the completed list
+        const exists = completedAppointments.some(app => app.id === updatedAppointment.id);
+        if (!exists) {
+          completedAppointments.push(updatedAppointment);
+          localStorage.setItem('completedAppointments', JSON.stringify(completedAppointments));
+        }
 
-        // Remove the appointment from the Dashboard list
-        const updatedAccepted = acceptedAppointments.filter(app => app.id !== id);
-        setAcceptedAppointments(updatedAccepted);
+        // Remove the appointment from the Dashboard list and refresh
+        fetchAppointments();
       })
       .catch(error => console.error("Error completing appointment:", error));
   };
