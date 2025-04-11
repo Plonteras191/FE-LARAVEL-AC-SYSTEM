@@ -3,11 +3,14 @@ import PageWrapper from '../components/PageWrapper';
 import axios from 'axios';
 import '../styles/Dashboard.css';
 
+// Base URL for Laravel API
+const API_BASE_URL = 'http://localhost:8000/api';
+
 const Dashboard = () => {
   const [acceptedAppointments, setAcceptedAppointments] = useState([]);
 
   useEffect(() => {
-    axios.get("http://localhost/AC-SERVICE-FINAL/backend/api/appointments.php")
+    axios.get(`${API_BASE_URL}/appointments`)
       .then(response => {
         let data = response.data;
         if (!Array.isArray(data)) data = [data];
@@ -22,7 +25,7 @@ const Dashboard = () => {
 
   // Complete appointment: update its status to "Completed"
   const completeAppointment = (id) => {
-    axios.post(`http://localhost/AC-SERVICE-FINAL/backend/api/appointments.php?action=complete&id=${id}`)
+    axios.post(`${API_BASE_URL}/appointments/${id}?action=complete`)
       .then(response => {
         const updatedAppointment = response.data;
         // Store the completed appointment in localStorage for later processing

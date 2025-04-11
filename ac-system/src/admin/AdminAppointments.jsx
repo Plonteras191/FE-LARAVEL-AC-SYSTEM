@@ -4,6 +4,9 @@ import Modal from '../components/Modal';
 import { useNavigate } from 'react-router-dom';
 import '../styles/AdminAppointments.css';
 
+// Base URL for Laravel API
+const API_BASE_URL = 'http://localhost:8000/api';
+
 const AdminAppointments = () => {
   const [appointments, setAppointments] = useState([]);
   const [rescheduleInputs, setRescheduleInputs] = useState({});
@@ -11,12 +14,9 @@ const AdminAppointments = () => {
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
   const navigate = useNavigate();
 
-  // Update endpoint URL based on your XAMPP folder structure
-  const fetchUrl = "http://localhost/AC-SERVICE-FINAL/backend/api/appointments.php";
-
   useEffect(() => {
-    // Fetch only pending appointments for admin view
-    axios.get(fetchUrl)
+    // Fetch appointments from Laravel backend
+    axios.get(`${API_BASE_URL}/appointments`)
       .then(response => {
         let data = response.data;
         if (!Array.isArray(data)) data = [data];
@@ -25,12 +25,12 @@ const AdminAppointments = () => {
         setAppointments(pending);
       })
       .catch(error => console.error("Error fetching appointments:", error));
-  }, [fetchUrl]);
+  }, []);
 
   // Delete (reject) appointment
   const handleCancelAppointment = async (id) => {
     try {
-      await axios.delete(`${fetchUrl}?id=${id}`);
+      await axios.delete(`${API_BASE_URL}/appointments/${id}`);
       setAppointments(prev => prev.filter(appt => appt.id !== id));
     } catch (error) {
       console.error("Error deleting appointment:", error);
@@ -82,7 +82,7 @@ const AdminAppointments = () => {
     if (!newDate) return;
     const payload = { service_name: serviceType, new_date: newDate };
     try {
-      const response = await axios.put(`${fetchUrl}?action=reschedule&id=${appointmentId}`, payload);
+      const response = await axios.put(`${API_BASE_URL}/appointments/${appointmentId}?action=reschedule`, payload);
       if (response.data && !response.data.error) {
         setAppointments(prev =>
           prev.map(appt => (appt.id === appointmentId ? response.data : appt))
@@ -113,21 +113,13 @@ const AdminAppointments = () => {
   // Accept appointment by sending a POST request with action=accept
   const handleAcceptAppointment = async (id) => {
     try {
-      const response = await axios.post(`${fetchUrl}?action=accept&id=${id}`);
+      const response = await axios.post(`${API_BASE_URL}/appointments/${id}?action=accept`);
       if (
         response.data &&
         response.data.status &&
         response.data.status.toLowerCase() === 'accepted'
       ) {
-        // If an email is provided, send email notification
-        if (response.data.email) {
-          await axios.post("http://localhost/AC-SERVICE-FINAL/backend/api/sendEmailNotification.php", {
-            email: response.data.email,
-            appointmentId: id,
-            name: response.data.name,
-            message: "Your appointment has been accepted."
-          });
-        }
+        // If appointment accepted successfully, remove from the list
         setAppointments(prev => prev.filter(appt => appt.id !== id));
       }
     } catch (error) {

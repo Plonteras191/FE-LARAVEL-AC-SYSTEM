@@ -4,6 +4,10 @@ import DatePicker from 'react-datepicker';
 import { parseISO, format } from 'date-fns';
 import "react-datepicker/dist/react-datepicker.css";
 import '../styles/Booking.css';
+import axios from 'axios';
+
+// Base URL for Laravel API
+const API_BASE_URL = 'http://localhost:8000/api';
 
 const serviceOptions = {
   cleaning: "Cleaning",
@@ -25,10 +29,16 @@ const Booking = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch("http://localhost/AC-SERVICE-FINAL/backend/api/getAvailableDates.php?global=1&start=2025-01-01&end=2025-12-31")
-      .then(response => response.json())
-      .then(data => {
-        const dates = data.map(dateStr => parseISO(dateStr));
+    // Fetch available dates from Laravel backend
+    axios.get(`${API_BASE_URL}/getAvailableDates`, {
+      params: { 
+        global: 1, 
+        start: '2025-01-01', 
+        end: '2025-12-31'
+      }
+    })
+      .then(response => {
+        const dates = response.data.map(dateStr => parseISO(dateStr));
         setGlobalAvailableDates(dates);
       })
       .catch(err => console.error("Error fetching available dates:", err));
@@ -118,22 +128,19 @@ const Booking = () => {
       }))
     };
 
-    fetch("http://localhost/AC-SERVICE-FINAL/backend/api/booking.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(bookingData),
-    })
-      .then(response => response.json())
-      .then(responseData => {
-        console.log("Response from backend:", responseData);
-        if (responseData.bookingId) {
+    // Send booking data to Laravel backend
+    axios.post(`${API_BASE_URL}/booking`, bookingData)
+      .then(response => {
+        console.log("Response from backend:", response.data);
+        if (response.data.bookingId) {
           navigate('/confirmation', { state: bookingData });
         } else {
-          alert("Error saving booking: " + responseData.message);
+          alert("Error saving booking: " + response.data.message);
         }
       })
       .catch(error => {
         console.error("Error saving booking:", error);
+        alert("Error saving booking. Please try again later.");
       });
   };
 
