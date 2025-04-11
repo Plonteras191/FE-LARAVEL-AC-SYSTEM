@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -16,6 +16,9 @@ const AdminCalendar = () => {
   const [serviceTypes, setServiceTypes] = useState([]);
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [hoverEvent, setHoverEvent] = useState(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const calendarRef = useRef(null);
 
   useEffect(() => {
     fetchAppointments();
@@ -107,9 +110,26 @@ const AdminCalendar = () => {
       });
   };
 
-  // Handle event click to show details
+  // Handle event click to show details modal
   const handleEventClick = (clickInfo) => {
     setSelectedEvent(clickInfo.event);
+  };
+
+  // Handle event hover
+  const handleEventMouseEnter = (mouseEnterInfo) => {
+    setHoverEvent(mouseEnterInfo.event);
+    
+    // Calculate position for tooltip
+    const rect = mouseEnterInfo.el.getBoundingClientRect();
+    setTooltipPosition({
+      x: rect.right + 10,
+      y: rect.top
+    });
+  };
+
+  // Handle mouse leave
+  const handleEventMouseLeave = () => {
+    setHoverEvent(null);
   };
 
   // Close event detail modal
@@ -124,7 +144,7 @@ const AdminCalendar = () => {
     return serviceMatch && statusMatch;
   });
 
-  // Format date for display in the modal
+  // Format date for display in the modal and tooltip
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
@@ -209,7 +229,7 @@ const AdminCalendar = () => {
           <p>Loading appointments...</p>
         </div>
       ) : (
-        <div className="calendar-wrapper">
+        <div className="calendar-wrapper" ref={calendarRef}>
           <FullCalendar 
             plugins={[dayGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
@@ -229,6 +249,8 @@ const AdminCalendar = () => {
             nowIndicator={true}
             dayMaxEvents={true}
             eventDisplay="block"
+            eventMouseEnter={handleEventMouseEnter}
+            eventMouseLeave={handleEventMouseLeave}
             eventContent={(eventInfo) => {
               return (
                 <div className="custom-event-content" style={{opacity: eventInfo.event.extendedProps.opacity}}>
@@ -240,6 +262,43 @@ const AdminCalendar = () => {
               );
             }}
           />
+          
+          {/* Event Hover Tooltip */}
+          {hoverEvent && (
+            <div 
+              className="event-tooltip" 
+              style={{
+                left: `${tooltipPosition.x}px`,
+                top: `${tooltipPosition.y}px`
+              }}
+            >
+              <div className="tooltip-header" style={{backgroundColor: hoverEvent.backgroundColor}}>
+                <h4>{hoverEvent.extendedProps.service}</h4>
+              </div>
+              <div className="tooltip-body">
+                <div className="tooltip-detail">
+                  <FaCalendarAlt /> 
+                  <span>{formatDate(hoverEvent.extendedProps.date)}</span>
+                </div>
+                <div className="tooltip-detail">
+                  <FaUser /> 
+                  <span>{hoverEvent.extendedProps.customer}</span>
+                </div>
+                <div className="tooltip-detail">
+                  <FaMapMarkerAlt /> 
+                  <span>{hoverEvent.extendedProps.address}</span>
+                </div>
+                <div className="tooltip-status">
+                  <span className={`status-badge ${hoverEvent.extendedProps.status.toLowerCase().replace(' ', '-')}`}>
+                    {hoverEvent.extendedProps.status}
+                  </span>
+                </div>
+                <div className="tooltip-footer">
+                  <small>Click for more details</small>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
       

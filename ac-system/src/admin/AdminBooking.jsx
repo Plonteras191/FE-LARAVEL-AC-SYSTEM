@@ -4,6 +4,10 @@ import { parseISO, format } from 'date-fns';
 import "react-datepicker/dist/react-datepicker.css";
 import Modal from '../components/Modal';
 import '../styles/Booking.css';
+import axios from 'axios';
+
+// Base URL for API
+const API_BASE_URL = 'http://localhost:8000/api';
 
 const serviceOptions = {
   cleaning: "Cleaning",
@@ -24,15 +28,27 @@ const AdminBooking = () => {
   const [globalAvailableDates, setGlobalAvailableDates] = useState([]);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [bookingRef, setBookingRef] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    fetch("http://localhost/AC-SERVICE-FINAL/backend/api/getAvailableDates.php?global=1&start=2025-01-01&end=2025-12-31")
-      .then(response => response.json())
-      .then(data => {
-        const dates = data.map(dateStr => parseISO(dateStr));
+    // Fetch available dates using axios
+    setIsLoading(true);
+    axios.get(`${API_BASE_URL}/getAvailableDates`, {
+      params: { 
+        global: 1, 
+        start: format(new Date(), 'yyyy-MM-dd'),
+        end: format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'yyyy-MM-dd')
+      }
+    })
+      .then(response => {
+        const dates = response.data.map(dateStr => parseISO(dateStr));
         setGlobalAvailableDates(dates);
+        setIsLoading(false);
       })
-      .catch(err => console.error("Error fetching available dates:", err));
+      .catch(err => {
+        console.error("Error fetching available dates:", err);
+        setIsLoading(false);
+      });
   }, []);
 
   const handleServiceChange = (e) => {
@@ -106,6 +122,9 @@ const AdminBooking = () => {
       }
     }
 
+    // Show loading state
+    setIsLoading(true);
+
     const formData = new FormData(e.target);
     const bookingData = {
       name: formData.get('name'),
@@ -119,27 +138,30 @@ const AdminBooking = () => {
       }))
     };
 
-    fetch("http://localhost/AC-SERVICE-FINAL/backend/api/booking.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(bookingData),
-    })
-      .then(response => response.json())
-      .then(responseData => {
-        console.log("Response from backend:", responseData);
-        if (responseData.bookingId) {
+    // Send booking data with axios
+    axios.post(`${API_BASE_URL}/booking`, bookingData)
+      .then(response => {
+        console.log("Response from backend:", response.data);
+        setIsLoading(false);
+        if (response.data.bookingId) {
           // Set the booking reference ID and open the confirmation modal
-          setBookingRef(responseData.bookingId);
+          setBookingRef(response.data.bookingId);
           setIsConfirmModalOpen(true);
           
           // Reset form after successful submission
           resetForm();
         } else {
-          alert("Sorry Fully Booked: " + responseData.message);
+          alert("Error saving booking: " + response.data.message);
         }
       })
       .catch(error => {
-        console.error("Sorry Fully Booked:", error);
+        setIsLoading(false);
+        console.error("Error saving booking:", error);
+        if (error.response && error.response.data && error.response.data.message) {
+          alert("Error: " + error.response.data.message);
+        } else {
+          alert("Error saving booking. Please try again later.");
+        }
       });
   };
 
@@ -160,6 +182,7 @@ const AdminBooking = () => {
   return (
     <div className="booking-container admin-booking">
       <h2>Admin Booking</h2>
+      {isLoading && <div className="loading-overlay">Loading...</div>}
       <div className="booking-box">
         <form id="adminBookingForm" onSubmit={handleSubmit}>
           <div className="form-section customer-details">
@@ -173,7 +196,8 @@ const AdminBooking = () => {
                 placeholder="Enter customer name" 
                 required 
                 pattern="[A-Za-z ]+" 
-                title="Name should contain only letters and spaces." 
+                title="Name should contain only letters and spaces."
+                disabled={isLoading}
               />
             </div>
             
@@ -186,7 +210,8 @@ const AdminBooking = () => {
                 placeholder="Enter 11-digit phone number" 
                 required 
                 pattern="^[0-9]{11}$" 
-                title="Phone number must be exactly 11 digits." 
+                title="Phone number must be exactly 11 digits."
+                disabled={isLoading}
               />
             </div>
             
@@ -196,7 +221,8 @@ const AdminBooking = () => {
                 type="email" 
                 id="email" 
                 name="email" 
-                placeholder="Enter customer email (optional)" 
+                placeholder="Enter customer email (optional)"
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -210,7 +236,8 @@ const AdminBooking = () => {
                 id="completeAddress" 
                 name="completeAddress" 
                 placeholder="Enter customer's complete address" 
-                required 
+                required
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -225,7 +252,8 @@ const AdminBooking = () => {
                     type="checkbox" 
                     value={key} 
                     checked={selectedServices.includes(key)} 
-                    onChange={handleServiceChange} 
+                    onChange={handleServiceChange}
+                    disabled={isLoading}
                   />
                   <span className="checkbox-label">{label}</span>
                 </label>
@@ -250,6 +278,7 @@ const AdminBooking = () => {
                         dateFormat="yyyy-MM-dd"
                         calendarClassName="custom-calendar"
                         className="date-input"
+                        disabled={isLoading}
                       />
                     </div>
                     
@@ -261,7 +290,8 @@ const AdminBooking = () => {
                             <input 
                               type="checkbox" 
                               checked={serviceAcTypes[service]?.includes(acType) || false}
-                              onChange={() => handleACTypeChange(service, acType)} 
+                              onChange={() => handleACTypeChange(service, acType)}
+                              disabled={isLoading}
                             />
                             <span className="checkbox-label">{acType}</span>
                           </label>
@@ -275,11 +305,22 @@ const AdminBooking = () => {
           </div>
 
           <div className="form-submit">
-            <button type="submit">Create Booking</button>
+            <button type="submit" disabled={isLoading}>
+              {isLoading ? "Processing..." : "Create Booking"}
+            </button>
           </div>
         </form>
       </div>
       
+      {isConfirmModalOpen && (
+        <Modal onClose={handleModalClose}>
+          <div className="confirmation-modal">
+            <h3>Booking Created Successfully</h3>
+            <p>The booking has been created with reference ID: <strong>{bookingRef}</strong></p>
+            <button onClick={handleModalClose}>Close</button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

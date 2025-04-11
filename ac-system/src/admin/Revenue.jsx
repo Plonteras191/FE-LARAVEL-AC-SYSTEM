@@ -68,7 +68,7 @@ const Revenue = () => {
     axios.post(`${API_BASE_URL}/revenue-history`, revenueRecord)
       .then(response => {
         if (response.data.success) {
-          alert("Revenue record saved successfully!");
+         
           
           // Clear localStorage for completed appointments and reset component state
           localStorage.removeItem('completedAppointments');
