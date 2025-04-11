@@ -113,7 +113,7 @@ const AdminAppointments = () => {
   // Accept appointment by sending a POST request with action=accept
   const handleAcceptAppointment = async (id) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/appointments/${id}?action=accept`);
+      const response = await axios.post(`${API_BASE_URL}/appointments/${id}/accept`);
       if (
         response.data &&
         response.data.status &&

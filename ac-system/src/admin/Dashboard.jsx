@@ -29,8 +29,8 @@ const Dashboard = () => {
 
   // Complete appointment: update its status to "Completed"
   const completeAppointment = (id) => {
-    axios.post(`${API_BASE_URL}/appointments/${id}?action=complete`)
-      .then(response => {
+  axios.post(`${API_BASE_URL}/appointments/${id}/complete`)
+    .then(response => {
         const updatedAppointment = response.data;
         
         // Store the completed appointment in localStorage for later processing in Revenue component

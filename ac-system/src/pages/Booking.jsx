@@ -265,7 +265,7 @@ const Booking = () => {
             <button type="submit">Schedule Appointment</button>
           </div>
         </form>
-      </div>
+      </div>  
     </div>
   );
 };
