@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaCheckCircle, FaClock, FaChartLine, FaCalendarAlt } from 'react-icons/fa';
+import { FaCheckCircle, FaClock, FaChartLine, FaCalendarAlt, FaBan, FaMoneyBillWave } from 'react-icons/fa';
 import '../styles/AdminReports.css';
 
 // Base URL for Laravel API
@@ -55,6 +55,14 @@ const AdminReports = () => {
   
   const acceptedAppointments = appointments.filter(appt => 
     appt.status && appt.status.toLowerCase() === 'accepted'
+  );
+  
+  const rejectedAppointments = appointments.filter(appt => 
+    appt.status && appt.status.toLowerCase() === 'rejected'
+  );
+  
+  const revenueProcessedAppointments = appointments.filter(appt => 
+    appt.status && appt.status.toLowerCase() === 'revenue processed'
   );
   
   // Group revenue history by month and sum total revenue
@@ -193,6 +201,18 @@ const AdminReports = () => {
           Active Appointments
         </button>
         <button 
+          className={activeTab === 'rejected' ? 'active' : ''} 
+          onClick={() => setActiveTab('rejected')}
+        >
+          Rejected Appointments
+        </button>
+        <button 
+          className={activeTab === 'revenue-processed' ? 'active' : ''} 
+          onClick={() => setActiveTab('revenue-processed')}
+        >
+          Revenue Processed
+        </button>
+        <button 
           className={activeTab === 'revenue' ? 'active' : ''} 
           onClick={() => setActiveTab('revenue')}
         >
@@ -258,6 +278,64 @@ const AdminReports = () => {
                   </ul>
                 ) : (
                   <div className="empty-state">No active appointments.</div>
+                )}
+              </div>
+            </div>
+
+            {/* Rejected Appointments */}
+            <div className="report-box rejected">
+              <h3><FaBan className="report-icon" /> Rejected Appointments</h3>
+              <div className="scrollable-content">
+                {rejectedAppointments.length > 0 ? (
+                  <ul>
+                    {rejectedAppointments.slice(0, 5).map(app => (
+                      <li key={app.id} className="appointment-item">
+                        <div className="appointment-header">
+                          <span className="appointment-id">#{app.id}</span>
+                          <span className="appointment-name">{app.name}</span>
+                        </div>
+                        <div className="appointment-date">
+                          <FaCalendarAlt /> {getAppointmentDate(app)}
+                        </div>
+                      </li>
+                    ))}
+                    {rejectedAppointments.length > 5 && (
+                      <button className="view-more" onClick={() => setActiveTab('rejected')}>
+                        View all {rejectedAppointments.length} appointments
+                      </button>
+                    )}
+                  </ul>
+                ) : (
+                  <div className="empty-state">No rejected appointments.</div>
+                )}
+              </div>
+            </div>
+
+            {/* Revenue Processed Appointments */}
+            <div className="report-box revenue-processed">
+              <h3><FaMoneyBillWave className="report-icon" /> Revenue Processed</h3>
+              <div className="scrollable-content">
+                {revenueProcessedAppointments.length > 0 ? (
+                  <ul>
+                    {revenueProcessedAppointments.slice(0, 5).map(app => (
+                      <li key={app.id} className="appointment-item">
+                        <div className="appointment-header">
+                          <span className="appointment-id">#{app.id}</span>
+                          <span className="appointment-name">{app.name}</span>
+                        </div>
+                        <div className="appointment-date">
+                          <FaCalendarAlt /> {getAppointmentDate(app)}
+                        </div>
+                      </li>
+                    ))}
+                    {revenueProcessedAppointments.length > 5 && (
+                      <button className="view-more" onClick={() => setActiveTab('revenue-processed')}>
+                        View all {revenueProcessedAppointments.length} appointments
+                      </button>
+                    )}
+                  </ul>
+                ) : (
+                  <div className="empty-state">No revenue processed appointments.</div>
                 )}
               </div>
             </div>
@@ -379,6 +457,96 @@ const AdminReports = () => {
               </div>
             ) : (
               <div className="empty-state">No active appointments found.</div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'rejected' && (
+          <div className="full-width-section">
+            <h3><FaBan className="report-icon" /> All Rejected Appointments</h3>
+            {rejectedAppointments.length > 0 ? (
+              <div className="appointment-list">
+                {rejectedAppointments.map(app => {
+                  const services = parseServices(app.services);
+                  return (
+                    <div key={app.id} className="appointment-card">
+                      <div className="appointment-card-header">
+                        <span className="appointment-id">#{app.id}</span>
+                        <span className="status-badge rejected">Rejected</span>
+                      </div>
+                      <div className="appointment-card-body">
+                        <h4>{app.name}</h4>
+                        <p><strong>Contact:</strong> {app.phone} | {app.email || 'N/A'}</p>
+                        <p><strong>Address:</strong> {app.complete_address}</p>
+                        <div className="services-list">
+                          <p><strong>Services:</strong></p>
+                          {services.length > 0 ? (
+                            <ul>
+                              {services.map((service, idx) => (
+                                <li key={idx}>
+                                  {service.type} on {new Date(service.date).toLocaleDateString()} 
+                                  {service.ac_types && service.ac_types.length > 0 && (
+                                    <span> | AC Types: {service.ac_types.join(', ')}</span>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p>No service details available</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="empty-state">No rejected appointments found.</div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'revenue-processed' && (
+          <div className="full-width-section">
+            <h3><FaMoneyBillWave className="report-icon" /> All Revenue Processed Appointments</h3>
+            {revenueProcessedAppointments.length > 0 ? (
+              <div className="appointment-list">
+                {revenueProcessedAppointments.map(app => {
+                  const services = parseServices(app.services);
+                  return (
+                    <div key={app.id} className="appointment-card">
+                      <div className="appointment-card-header">
+                        <span className="appointment-id">#{app.id}</span>
+                        <span className="status-badge revenue-processed">Revenue Processed</span>
+                      </div>
+                      <div className="appointment-card-body">
+                        <h4>{app.name}</h4>
+                        <p><strong>Contact:</strong> {app.phone} | {app.email || 'N/A'}</p>
+                        <p><strong>Address:</strong> {app.complete_address}</p>
+                        <div className="services-list">
+                          <p><strong>Services:</strong></p>
+                          {services.length > 0 ? (
+                            <ul>
+                              {services.map((service, idx) => (
+                                <li key={idx}>
+                                  {service.type} on {new Date(service.date).toLocaleDateString()} 
+                                  {service.ac_types && service.ac_types.length > 0 && (
+                                    <span> | AC Types: {service.ac_types.join(', ')}</span>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p>No service details available</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="empty-state">No revenue processed appointments found.</div>
             )}
           </div>
         )}
