@@ -38,7 +38,8 @@
 .reschedule-button,
 .confirm-button,
 .accept-button,
-.reject-button {
+.reject-button,
+.complete-button {  /* Added complete-button */
   padding: 8px 12px;
   border: none;
   border-radius: 6px;
@@ -99,6 +100,17 @@
   transform: scale(1.05);
 }
 
+/* Complete button styling (added from Dashboard.css) */
+.complete-button {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.complete-button:hover {
+  background-color: #218838;
+  transform: scale(1.05);
+}
+
 /* Spacing for the service(s) column */
 .appointments-table td > div {
   margin-bottom: 8px; /* add some vertical space between service entries */
@@ -124,4 +136,24 @@
   padding: 7px;
   border: 1px solid #ccc;
   border-radius: 4px;
+}
+
+/* Dashboard section styling (added from Dashboard.css) */
+.dashboard-section {
+  margin-top: 30px;
+}
+
+.dashboard-section-title {
+  color: #007BFF;
+  margin-top: 40px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.appointment-box {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
 }

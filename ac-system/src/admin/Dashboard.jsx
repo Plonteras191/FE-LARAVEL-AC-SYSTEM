@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import PageWrapper from '../components/PageWrapper';
 import axios from 'axios';
 import '../styles/Dashboard.css';
@@ -6,134 +7,199 @@ import '../styles/Dashboard.css';
 // Base URL for Laravel API
 const API_BASE_URL = 'http://localhost:8000/api';
 
+// Updated color palette with light blue and white theme
+const COLORS = ['#0088FE', '#4FB3FF', '#90CDF4', '#BEE3F8', '#EBF8FF'];
+const STATUS_COLORS = {
+  pending: '#BEE3F8',  // Light blue
+  accepted: '#4FB3FF', // Medium blue
+  completed: '#0088FE', // Darker blue
+  rejected: '#F7FAFC'  // Almost white
+};
+
 const Dashboard = () => {
-  const [acceptedAppointments, setAcceptedAppointments] = useState([]);
+  const [appointments, setAppointments] = useState([]);
+  const [serviceCounts, setServiceCounts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const fetchAppointments = () => {
-    axios.get(`${API_BASE_URL}/appointments`)
-      .then(response => {
-        let data = response.data;
-        if (!Array.isArray(data)) data = [data];
-        // Show only appointments with status "accepted" (pending for completion)
-        const accepted = data.filter(appt => 
-          appt.status && appt.status.toLowerCase() === 'accepted'
-        );
-        setAcceptedAppointments(accepted);
-      })
-      .catch(error => console.error("Error fetching appointments:", error));
-  };
-
+  // Fetch all necessary data when component mounts
   useEffect(() => {
-    fetchAppointments();
+    const fetchAllData = async () => {
+      try {
+        setLoading(true);
+        await fetchAppointments();
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchAllData();
+    // Refresh data every 5 minutes
+    const interval = setInterval(fetchAllData, 300000);
+    return () => clearInterval(interval);
   }, []);
 
-  // Complete appointment: update its status to "Completed"
-  const completeAppointment = (id) => {
-  axios.post(`${API_BASE_URL}/appointments/${id}/complete`)
-    .then(response => {
-        const updatedAppointment = response.data;
-        
-        // Store the completed appointment in localStorage for later processing in Revenue component
-        const stored = localStorage.getItem('completedAppointments');
-        const completedAppointments = stored ? JSON.parse(stored) : [];
-        
-        // Check if this appointment is already in the completed list
-        const exists = completedAppointments.some(app => app.id === updatedAppointment.id);
-        if (!exists) {
-          completedAppointments.push(updatedAppointment);
-          localStorage.setItem('completedAppointments', JSON.stringify(completedAppointments));
-        }
+  // Process service types when appointments are loaded
+  useEffect(() => {
+    if (appointments.length > 0) {
+      processServiceCounts();
+    }
+  }, [appointments]);
 
-        // Remove the appointment from the Dashboard list and refresh
-        fetchAppointments();
-      })
-      .catch(error => console.error("Error completing appointment:", error));
-  };
-
-  // Utility function to parse services JSON string with numbering
-  const parseServices = (servicesStr) => {
+  // Fetch all appointments
+  const fetchAppointments = async () => {
     try {
-      const services = JSON.parse(servicesStr);
-      return services.map((s, index) => `${index + 1}. ${s.type} on ${s.date}`).join(' | ');
+      const response = await axios.get(`${API_BASE_URL}/appointments`);
+      let data = response.data;
+      if (!Array.isArray(data)) data = [data];
+      setAppointments(data);
+      return data;
     } catch (error) {
-      console.error("Error parsing services:", error);
-      return 'N/A';
+      console.error("Error fetching appointments:", error);
+      return [];
     }
   };
 
-  // Utility function to parse AC types from the services JSON string with proper numbering per service
-  const parseAcTypes = (servicesStr) => {
-    try {
-      const services = JSON.parse(servicesStr);
-      return services.map((s, index) => {
-        if (s.ac_types && s.ac_types.length > 0) {
-          // Prefix each AC type with the service number
-          return s.ac_types.map(ac => `${index + 1}. ${ac}`).join(', ');
-        } else {
-          return 'N/A';
+  // Process service types and counts
+  const processServiceCounts = () => {
+    const serviceTypes = {};
+    
+    appointments.forEach(appointment => {
+      if (appointment.services) {
+        try {
+          const services = JSON.parse(appointment.services);
+          services.forEach(service => {
+            if (service.type) {
+              if (!serviceTypes[service.type]) {
+                serviceTypes[service.type] = 0;
+              }
+              serviceTypes[service.type]++;
+            }
+          });
+        } catch (error) {
+          console.error("Error parsing services:", error);
         }
-      }).join(' | ');
-    } catch (error) {
-      console.error("Error parsing AC types:", error);
-      return 'N/A';
-    }
+      }
+    });
+    
+    // Convert to array format for charts
+    const serviceCountsArray = Object.keys(serviceTypes).map(type => ({
+      name: type,
+      value: serviceTypes[type]
+    }));
+    
+    setServiceCounts(serviceCountsArray);
   };
+
+  // Calculate appointment statistics for the summary cards
+  const getAppointmentStats = () => {
+    const total = appointments.length;
+    const pending = appointments.filter(a => a.status && a.status.toLowerCase() === 'pending').length;
+    const accepted = appointments.filter(a => a.status && a.status.toLowerCase() === 'accepted').length;
+    const completed = appointments.filter(a => a.status && a.status.toLowerCase() === 'completed').length;
+    const rejected = appointments.filter(a => a.status && a.status.toLowerCase() === 'rejected').length;
+    
+    return { total, pending, accepted, completed, rejected };
+  };
+
+  const stats = getAppointmentStats();
+
+  // Calculate percentage for appointment status distribution pie chart
+  const getStatusDistribution = () => {
+    const { total, pending, accepted, completed, rejected } = stats;
+    if (total === 0) return [];
+    
+    return [
+      { name: 'Pending', value: pending },
+      { name: 'Accepted', value: accepted },
+      { name: 'Completed', value: completed },
+      { name: 'Rejected', value: rejected }
+    ];
+  };
+
+  const statusDistribution = getStatusDistribution();
 
   return (
     <PageWrapper>
       <div className="dashboard-main">
-        <h1>Admin Dashboard</h1>
-        <div className="dashboard-section">
-          <div className="appointment-box">
-            {acceptedAppointments.length > 0 ? (
-              <table className="appointments-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Customer</th>
-                    <th>Phone</th>
-                    <th>Email</th>
-                    <th>Service(s)</th>
-                    <th>AC Type(s)</th>
-                    <th>Address</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {acceptedAppointments.map((appointment) => (
-                    <tr key={appointment.id}>
-                      <td>{appointment.id}</td>
-                      <td>{appointment.name}</td>
-                      <td>{appointment.phone}</td>
-                      <td>{appointment.email || 'N/A'}</td>
-                      <td>
-                        {appointment.services 
-                          ? parseServices(appointment.services)
-                          : 'N/A'}
-                      </td>
-                      <td>
-                        {appointment.services 
-                          ? parseAcTypes(appointment.services)
-                          : 'N/A'}
-                      </td>
-                      <td>{appointment.complete_address}</td>
-                      <td>{appointment.status || 'Pending'}</td>
-                      <td>
-                        <button
-                          className="complete-button"
-                          onClick={() => completeAppointment(appointment.id)}
-                        >
-                          Complete
-                        </button>
-                      </td>
-                    </tr>
+        <h1 className="dashboard-title">Admin Dashboard</h1>
+        
+        {/* Summary Cards */}
+        <div className="summary-cards">
+          <div className="summary-card total">
+            <h3>Total Appointments</h3>
+            <p className="count">{stats.total}</p>
+          </div>
+          <div className="summary-card pending">
+            <h3>Pending</h3>
+            <p className="count">{stats.pending}</p>
+          </div>
+          <div className="summary-card accepted">
+            <h3>Accepted</h3>
+            <p className="count">{stats.accepted}</p>
+          </div>
+          <div className="summary-card completed">
+            <h3>Completed</h3>
+            <p className="count">{stats.completed}</p>
+          </div>
+        </div>
+        
+        {/* Charts Section */}
+        <div className="charts-section">
+          {/* Appointment Status Distribution */}
+          <div className="chart-container">
+            <h2>Appointment Status</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={statusDistribution}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={true}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="value"
+                  nameKey="name"
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                >
+                  {statusDistribution.map((entry) => (
+                    <Cell 
+                      key={`cell-${entry.name}`} 
+                      fill={STATUS_COLORS[entry.name.toLowerCase()] || '#8884d8'} 
+                    />
                   ))}
-                </tbody>
-              </table>
-            ) : (
-              <p>No accepted appointments available.</p>
-            )}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          
+          {/* Service Type Distribution */}
+          <div className="chart-container">
+            <h2>Service Type Distribution</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={serviceCounts}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={true}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="value"
+                  nameKey="name"
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                >
+                  {serviceCounts.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>

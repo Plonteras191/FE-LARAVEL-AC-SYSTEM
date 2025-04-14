@@ -52,7 +52,7 @@ const AdminCalendar = () => {
             const services = JSON.parse(appt.services || '[]');
             
             services.forEach(service => {
-              // Determine color based on service type and status
+              // Determine color based on service type
               const serviceColors = {
                 'Cleaning': '#4e73df',
                 'Repair': '#e74a3b',
@@ -65,8 +65,7 @@ const AdminCalendar = () => {
               const statusOpacity = {
                 'Pending': '0.7',
                 'Accepted': '1',
-                'Completed': '0.5',
-                'Revenue Processed': '0.3',
+                'Completed': '0.5'
               };
               
               const defaultColor = '#6c757d';
@@ -190,7 +189,6 @@ const AdminCalendar = () => {
               <option value="Pending">Pending</option>
               <option value="Accepted">Accepted</option>
               <option value="Completed">Completed</option>
-              <option value="Revenue Processed">Revenue Processed</option>
             </select>
           </div>
           <button onClick={fetchAppointments} className="refresh-button">

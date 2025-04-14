@@ -3,29 +3,48 @@ import axios from 'axios';
 import Modal from '../components/Modal';
 import { useNavigate } from 'react-router-dom';
 import '../styles/AdminAppointments.css';
+import PageWrapper from '../components/PageWrapper';
 
 // Base URL for Laravel API
 const API_BASE_URL = 'http://localhost:8000/api';
 
 const AdminAppointments = () => {
   const [appointments, setAppointments] = useState([]);
+  const [acceptedAppointments, setAcceptedAppointments] = useState([]);
   const [rescheduleInputs, setRescheduleInputs] = useState({});
+  
+  // Modal states
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
+  const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
+  const [modalType, setModalType] = useState(''); // To track which action we're confirming
+  
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch appointments from Laravel backend
+    // Fetch all appointments from Laravel backend
+    fetchAppointments();
+  }, []);
+
+  const fetchAppointments = () => {
     axios.get(`${API_BASE_URL}/appointments`)
       .then(response => {
         let data = response.data;
         if (!Array.isArray(data)) data = [data];
+        
         // Filter to show only pending appointments
         const pending = data.filter(appt => !appt.status || appt.status.toLowerCase() === 'pending');
         setAppointments(pending);
+        
+        // Filter to show only accepted appointments (pending for completion)
+        const accepted = data.filter(appt => 
+          appt.status && appt.status.toLowerCase() === 'accepted'
+        );
+        setAcceptedAppointments(accepted);
       })
       .catch(error => console.error("Error fetching appointments:", error));
-  }, []);
+  };
 
   // Delete (reject) appointment
   const handleCancelAppointment = async (id) => {
@@ -40,7 +59,22 @@ const AdminAppointments = () => {
   // Open modal to confirm rejection
   const openRejectModal = (id) => {
     setSelectedAppointmentId(id);
+    setModalType('reject');
     setIsConfirmModalOpen(true);
+  };
+
+  // Open modal to confirm acceptance
+  const openAcceptModal = (id) => {
+    setSelectedAppointmentId(id);
+    setModalType('accept');
+    setIsAcceptModalOpen(true);
+  };
+
+  // Open modal to confirm completion
+  const openCompleteModal = (id) => {
+    setSelectedAppointmentId(id);
+    setModalType('complete');
+    setIsCompleteModalOpen(true);
   };
 
   // Confirm rejection and delete appointment
@@ -50,9 +84,13 @@ const AdminAppointments = () => {
     setSelectedAppointmentId(null);
   };
 
+  // Close any modal without action
   const handleCancelModal = () => {
     setIsConfirmModalOpen(false);
+    setIsAcceptModalOpen(false);
+    setIsCompleteModalOpen(false);
     setSelectedAppointmentId(null);
+    setModalType('');
   };
 
   // Toggle inline reschedule input for a given appointment service
@@ -119,12 +157,39 @@ const AdminAppointments = () => {
         response.data.status &&
         response.data.status.toLowerCase() === 'accepted'
       ) {
-        // If appointment accepted successfully, remove from the list
-        setAppointments(prev => prev.filter(appt => appt.id !== id));
+        // If appointment accepted successfully, refresh data
+        fetchAppointments();
       }
     } catch (error) {
       console.error("Error accepting appointment:", error);
     }
+    setIsAcceptModalOpen(false);
+    setSelectedAppointmentId(null);
+  };
+
+  // Complete appointment: update its status to "Completed"
+  const completeAppointment = (id) => {
+    axios.post(`${API_BASE_URL}/appointments/${id}/complete`)
+      .then(response => {
+        const updatedAppointment = response.data;
+        
+        // Store the completed appointment in localStorage for later processing in Revenue component
+        const stored = localStorage.getItem('completedAppointments');
+        const completedAppointments = stored ? JSON.parse(stored) : [];
+        
+        // Check if this appointment is already in the completed list
+        const exists = completedAppointments.some(app => app.id === updatedAppointment.id);
+        if (!exists) {
+          completedAppointments.push(updatedAppointment);
+          localStorage.setItem('completedAppointments', JSON.stringify(completedAppointments));
+        }
+
+        // Refresh appointments
+        fetchAppointments();
+      })
+      .catch(error => console.error("Error completing appointment:", error));
+    setIsCompleteModalOpen(false);
+    setSelectedAppointmentId(null);
   };
 
   // Utility function to parse services JSON string
@@ -137,120 +202,227 @@ const AdminAppointments = () => {
     }
   };
 
+  // Utility function to parse services JSON string with numbering
+  const parseServicesFormatted = (servicesStr) => {
+    try {
+      const services = JSON.parse(servicesStr);
+      return services.map((s, index) => `${index + 1}. ${s.type} on ${s.date}`).join(' | ');
+    } catch (error) {
+      console.error("Error parsing services:", error);
+      return 'N/A';
+    }
+  };
+
+  // Utility function to parse AC types from the services JSON string with proper numbering per service
+  const parseAcTypes = (servicesStr) => {
+    try {
+      const services = JSON.parse(servicesStr);
+      return services.map((s, index) => {
+        if (s.ac_types && s.ac_types.length > 0) {
+          // Prefix each AC type with the service number
+          return s.ac_types.map(ac => `${index + 1}. ${ac}`).join(', ');
+        } else {
+          return 'N/A';
+        }
+      }).join(' | ');
+    } catch (error) {
+      console.error("Error parsing AC types:", error);
+      return 'N/A';
+    }
+  };
+
   return (
-    <div className="admin-appointments-container">
-      <h2>Admin Appointments</h2>
-      {appointments.length === 0 ? (
-        <p>No appointments available.</p>
-      ) : (
-        <table className="appointments-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Customer</th>
-              <th>Phone</th>
-              <th>Email</th>
-              <th>Service(s)</th>
-              <th>AC Type(s)</th>
-              <th>Address</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {appointments.map((appt) => {
-              const services = parseServices(appt.services);
-              return (
-                <tr key={appt.id}>
-                  <td>{appt.id}</td>
-                  <td>{appt.name}</td>
-                  <td>{appt.phone}</td>
-                  <td>{appt.email || 'N/A'}</td>
-                  <td>
-                    {services.length > 0 ? (
-                      services.map((s, index) => {
-                        const key = `${appt.id}-${s.type}-${index}`;
-                        return (
-                          <div key={key}>
-                            <span>
-                              {index + 1}. {s.type} on {s.date}
-                            </span>
-                            {rescheduleInputs[key] !== undefined ? (
-                              <div className="reschedule-input-container">
-                                <input
-                                  type="date"
-                                  value={rescheduleInputs[key]}
-                                  onChange={(e) =>
-                                    handleRescheduleInputChange(appt.id, s.type, index, e.target.value)
-                                  }
-                                  className="reschedule-date-input"
-                                />
+    <PageWrapper>
+      <div className="admin-appointments-container">
+        <h2>Admin Appointments</h2>
+        {appointments.length === 0 ? (
+          <p>No pending appointments available.</p>
+        ) : (
+          <table className="appointments-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Customer</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Service(s)</th>
+                <th>AC Type(s)</th>
+                <th>Address</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {appointments.map((appt) => {
+                const services = parseServices(appt.services);
+                return (
+                  <tr key={appt.id}>
+                    <td>{appt.id}</td>
+                    <td>{appt.name}</td>
+                    <td>{appt.phone}</td>
+                    <td>{appt.email || 'N/A'}</td>
+                    <td>
+                      {services.length > 0 ? (
+                        services.map((s, index) => {
+                          const key = `${appt.id}-${s.type}-${index}`;
+                          return (
+                            <div key={key}>
+                              <span>
+                                {index + 1}. {s.type} on {s.date}
+                              </span>
+                              {rescheduleInputs[key] !== undefined ? (
+                                <div className="reschedule-input-container">
+                                  <input
+                                    type="date"
+                                    value={rescheduleInputs[key]}
+                                    onChange={(e) =>
+                                      handleRescheduleInputChange(appt.id, s.type, index, e.target.value)
+                                    }
+                                    className="reschedule-date-input"
+                                  />
+                                  <button
+                                    className="confirm-button"
+                                    onClick={() => handleServiceRescheduleConfirm(appt.id, s.type, index)}
+                                    disabled={!rescheduleInputs[key]}
+                                  >
+                                    Confirm
+                                  </button>
+                                  <button
+                                    className="cancel-button"
+                                    onClick={() => handleRescheduleCancel(appt.id, s.type, index)}
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              ) : (
                                 <button
-                                  className="confirm-button"
-                                  onClick={() => handleServiceRescheduleConfirm(appt.id, s.type, index)}
-                                  disabled={!rescheduleInputs[key]}
+                                  className="reschedule-button"
+                                  onClick={() => toggleRescheduleInput(appt.id, s.type, index)}
                                 >
-                                  Confirm
+                                  Reschedule
                                 </button>
-                                <button
-                                  className="cancel-button"
-                                  onClick={() => handleRescheduleCancel(appt.id, s.type, index)}
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            ) : (
-                              <button
-                                className="reschedule-button"
-                                onClick={() => toggleRescheduleInput(appt.id, s.type, index)}
-                              >
-                                Reschedule
-                              </button>
-                            )}
+                              )}
+                            </div>
+                          );
+                        })
+                      ) : (
+                        'N/A'
+                      )}
+                    </td>
+                    <td>
+                      {services.length > 0 ? (
+                        services.map((s, sIndex) => (
+                          <div key={`ac-${appt.id}-${sIndex}`}>
+                            {s.ac_types && s.ac_types.length > 0
+                              ? s.ac_types.map((ac, acIndex) => `${sIndex + 1}. ${ac}`).join(', ')
+                              : 'N/A'}
                           </div>
-                        );
-                      })
-                    ) : (
-                      'N/A'
-                    )}
-                  </td>
-                  <td>
-                    {services.length > 0 ? (
-                      services.map((s, sIndex) => (
-                        <div key={`ac-${appt.id}-${sIndex}`}>
-                          {s.ac_types && s.ac_types.length > 0
-                            ? s.ac_types.map((ac, acIndex) => `${sIndex + 1}. ${ac}`).join(', ')
-                            : 'N/A'}
-                        </div>
-                      ))
-                    ) : (
-                      'N/A'
-                    )}
-                  </td>
-                  <td>{appt.complete_address}</td>
-                  <td>{appt.status || 'Pending'}</td>
-                  <td>
-                    <button className="reject-button" onClick={() => openRejectModal(appt.id)}>
-                      Reject
-                    </button>
-                    <button className="accept-button" onClick={() => handleAcceptAppointment(appt.id)}>
-                      Accept
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      )}
-      <Modal
-        isOpen={isConfirmModalOpen}
-        title="Confirm Rejection"
-        message="Are you sure you want to reject this appointment?"
-        onConfirm={handleConfirmReject}
-        onCancel={handleCancelModal}
-      />
-    </div>
+                        ))
+                      ) : (
+                        'N/A'
+                      )}
+                    </td>
+                    <td>{appt.complete_address}</td>
+                    <td>{appt.status || 'Pending'}</td>
+                    <td>
+                      <button className="reject-button" onClick={() => openRejectModal(appt.id)}>
+                        Reject
+                      </button>
+                      <button className="accept-button" onClick={() => openAcceptModal(appt.id)}>
+                        Accept
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+
+        {/* Dashboard's Accepted Appointments Section (transferred from Dashboard.jsx) */}
+        <h2 className="dashboard-section-title">Accepted Appointments</h2>
+        <div className="dashboard-section">
+          <div className="appointment-box">
+            {acceptedAppointments.length > 0 ? (
+              <table className="appointments-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Customer</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Service(s)</th>
+                    <th>AC Type(s)</th>
+                    <th>Address</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {acceptedAppointments.map((appointment) => (
+                    <tr key={appointment.id}>
+                      <td>{appointment.id}</td>
+                      <td>{appointment.name}</td>
+                      <td>{appointment.phone}</td>
+                      <td>{appointment.email || 'N/A'}</td>
+                      <td>
+                        {appointment.services 
+                          ? parseServicesFormatted(appointment.services)
+                          : 'N/A'}
+                      </td>
+                      <td>
+                        {appointment.services 
+                          ? parseAcTypes(appointment.services)
+                          : 'N/A'}
+                      </td>
+                      <td>{appointment.complete_address}</td>
+                      <td>{appointment.status || 'Pending'}</td>
+                      <td>
+                        <button
+                          className="complete-button"
+                          onClick={() => openCompleteModal(appointment.id)}
+                        >
+                          Complete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p>No accepted appointments available.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Reject Modal */}
+        <Modal
+          isOpen={isConfirmModalOpen}
+          title="Confirm Rejection"
+          message="Are you sure you want to reject this appointment?"
+          onConfirm={handleConfirmReject}
+          onCancel={handleCancelModal}
+        />
+
+        {/* Accept Modal */}
+        <Modal
+          isOpen={isAcceptModalOpen}
+          title="Confirm Acceptance"
+          message="Are you sure you want to accept this appointment?"
+          onConfirm={() => handleAcceptAppointment(selectedAppointmentId)}
+          onCancel={handleCancelModal}
+        />
+
+        {/* Complete Modal */}
+        <Modal
+          isOpen={isCompleteModalOpen}
+          title="Confirm Completion"
+          message="Are you sure you want to mark this appointment as completed?"
+          onConfirm={() => completeAppointment(selectedAppointmentId)}
+          onCancel={handleCancelModal}
+        />
+      </div>
+    </PageWrapper>
   );
 };
 
