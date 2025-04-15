@@ -108,7 +108,7 @@
   white-space: nowrap;
 }
 
-/* Input Styling */
+/* Revenue Input Styling */
 .revenue-input-wrapper {
   position: relative;
   display: flex;
@@ -144,6 +144,64 @@
   color: #9aa0a6;
 }
 
+/* Discount Input Styling */
+.discount-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 100px;
+}
+
+.percent-symbol {
+  position: absolute;
+  right: 10px;
+  color: #5f6368;
+}
+
+.discount-input-column input {
+  width: 100%;
+  padding: 0.8rem 1.8rem 0.8rem 0.8rem;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #3c4043;
+  background-color: #f8f9fa;
+  transition: all 0.2s ease;
+  text-align: right;
+}
+
+.discount-input-column input:focus {
+  outline: none;
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+  background-color: white;
+}
+
+.discount-input-column input::placeholder {
+  color: #9aa0a6;
+}
+
+/* Discount Amount and Net Amount Columns */
+.discount-amount-column, .net-amount-column {
+  font-weight: 600;
+}
+
+.discount-amount {
+  color: #ea4335;
+  background-color: #fce8e6;
+  padding: 0.5rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.net-amount {
+  color: #34a853;
+  background-color: #e6f4ea;
+  padding: 0.5rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
 /* Summary and Action Section */
 .revenue-summary {
   display: flex;
@@ -159,7 +217,7 @@
   gap: 1rem;
 }
 
-.compute-button, .save-button {
+.save-button {
   padding: 0.8rem 1.5rem;
   border: none;
   border-radius: 50px;
@@ -170,24 +228,6 @@
   align-items: center;
   gap: 8px;
   transition: all 0.3s ease;
-}
-
-.button-icon {
-  font-size: 1.2rem;
-}
-
-.compute-button {
-  background-color: #34a853;
-  color: white;
-}
-
-.compute-button:hover {
-  background-color: #2d9249;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.save-button {
   background-color: #1a73e8;
   color: white;
 }
@@ -198,18 +238,39 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Total Display */
-.total-display {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+.button-icon {
+  font-size: 1.2rem;
 }
 
-.total-display h3 {
+/* Summary Details */
+.summary-details {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.summary-item h3 {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 500;
   color: #3c4043;
+  white-space: nowrap;
+}
+
+.total-discount {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ea4335;
+  padding: 0.5rem 1.2rem;
+  background-color: #fce8e6;
+  border-radius: 8px;
+  white-space: nowrap;
 }
 
 .total-amount {
@@ -219,9 +280,16 @@
   padding: 0.5rem 1.5rem;
   background-color: #e8f0fe;
   border-radius: 8px;
+  white-space: nowrap;
 }
 
 /* Responsive Adjustments */
+@media (max-width: 1200px) {
+  .revenue-table {
+    min-width: 1000px;
+  }
+}
+
 @media (max-width: 992px) {
   .revenue-container {
     padding: 1.5rem;
@@ -239,8 +307,8 @@
     align-items: flex-start;
   }
   
-  .total-display {
-    align-self: stretch;
+  .summary-details {
+    width: 100%;
     justify-content: space-between;
   }
 }
@@ -256,11 +324,17 @@
   
   .actions-group {
     width: 100%;
-    justify-content: space-between;
   }
   
-  .compute-button, .save-button {
+  .save-button {
     padding: 0.7rem 1rem;
     font-size: 0.9rem;
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .summary-details {
+    flex-direction: column;
+    gap: 1rem;
   }
 }

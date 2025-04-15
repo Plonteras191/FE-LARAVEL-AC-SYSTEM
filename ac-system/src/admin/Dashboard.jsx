@@ -1,24 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import PageWrapper from '../components/PageWrapper';
 import axios from 'axios';
 import '../styles/Dashboard.css';
+import { 
+  FaCalendarAlt, 
+  FaMoneyBillWave
+} from 'react-icons/fa';
 
 // Base URL for Laravel API
 const API_BASE_URL = 'http://localhost:8000/api';
 
-// Updated color palette with light blue and white theme
-const COLORS = ['#0088FE', '#4FB3FF', '#90CDF4', '#BEE3F8', '#EBF8FF'];
-const STATUS_COLORS = {
-  pending: '#BEE3F8',  // Light blue
-  accepted: '#4FB3FF', // Medium blue
-  completed: '#0088FE', // Darker blue
-  rejected: '#F7FAFC'  // Almost white
-};
-
 const Dashboard = () => {
   const [appointments, setAppointments] = useState([]);
-  const [serviceCounts, setServiceCounts] = useState([]);
+  const [revenueHistory, setRevenueHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Fetch all necessary data when component mounts
@@ -27,6 +21,7 @@ const Dashboard = () => {
       try {
         setLoading(true);
         await fetchAppointments();
+        await fetchRevenueHistory();
         setLoading(false);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -39,13 +34,6 @@ const Dashboard = () => {
     const interval = setInterval(fetchAllData, 300000);
     return () => clearInterval(interval);
   }, []);
-
-  // Process service types when appointments are loaded
-  useEffect(() => {
-    if (appointments.length > 0) {
-      processServiceCounts();
-    }
-  }, [appointments]);
 
   // Fetch all appointments
   const fetchAppointments = async () => {
@@ -61,35 +49,23 @@ const Dashboard = () => {
     }
   };
 
-  // Process service types and counts
-  const processServiceCounts = () => {
-    const serviceTypes = {};
-    
-    appointments.forEach(appointment => {
-      if (appointment.services) {
-        try {
-          const services = JSON.parse(appointment.services);
-          services.forEach(service => {
-            if (service.type) {
-              if (!serviceTypes[service.type]) {
-                serviceTypes[service.type] = 0;
-              }
-              serviceTypes[service.type]++;
-            }
-          });
-        } catch (error) {
-          console.error("Error parsing services:", error);
-        }
+  // Fetch revenue history
+  const fetchRevenueHistory = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/revenue-history`);
+      if (response.data && response.data.history) {
+        const history = response.data.history;
+        setRevenueHistory(history);
+        return history;
+      } else {
+        setRevenueHistory([]);
+        return [];
       }
-    });
-    
-    // Convert to array format for charts
-    const serviceCountsArray = Object.keys(serviceTypes).map(type => ({
-      name: type,
-      value: serviceTypes[type]
-    }));
-    
-    setServiceCounts(serviceCountsArray);
+    } catch (error) {
+      console.error("Error fetching revenue history:", error);
+      setRevenueHistory([]);
+      return [];
+    }
   };
 
   // Calculate appointment statistics for the summary cards
@@ -103,27 +79,28 @@ const Dashboard = () => {
     return { total, pending, accepted, completed, rejected };
   };
 
-  const stats = getAppointmentStats();
-
-  // Calculate percentage for appointment status distribution pie chart
-  const getStatusDistribution = () => {
-    const { total, pending, accepted, completed, rejected } = stats;
-    if (total === 0) return [];
-    
-    return [
-      { name: 'Pending', value: pending },
-      { name: 'Accepted', value: accepted },
-      { name: 'Completed', value: completed },
-      { name: 'Rejected', value: rejected }
-    ];
+  // Calculate total revenue from history
+  const calculateTotalRevenue = () => {
+    if (!revenueHistory || revenueHistory.length === 0) return 0;
+    return revenueHistory.reduce((sum, entry) => sum + parseFloat(entry.total_revenue), 0);
   };
 
-  const statusDistribution = getStatusDistribution();
+  const stats = getAppointmentStats();
+  const totalRevenue = calculateTotalRevenue();
 
   return (
     <PageWrapper>
       <div className="dashboard-main">
         <h1 className="dashboard-title">Admin Dashboard</h1>
+        
+        <div className="date-display">
+          <FaCalendarAlt /> {new Date().toLocaleDateString('en-US', {
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric'
+          })}
+        </div>
         
         {/* Summary Cards */}
         <div className="summary-cards">
@@ -143,63 +120,9 @@ const Dashboard = () => {
             <h3>Completed</h3>
             <p className="count">{stats.completed}</p>
           </div>
-        </div>
-        
-        {/* Charts Section */}
-        <div className="charts-section">
-          {/* Appointment Status Distribution */}
-          <div className="chart-container">
-            <h2>Appointment Status</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={statusDistribution}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={true}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                  nameKey="name"
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                >
-                  {statusDistribution.map((entry) => (
-                    <Cell 
-                      key={`cell-${entry.name}`} 
-                      fill={STATUS_COLORS[entry.name.toLowerCase()] || '#8884d8'} 
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          
-          {/* Service Type Distribution */}
-          <div className="chart-container">
-            <h2>Service Type Distribution</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={serviceCounts}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={true}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                  nameKey="name"
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                >
-                  {serviceCounts.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+          <div className="summary-card revenue">
+            <h3>Total Revenue</h3>
+            <p className="count">₱{totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           </div>
         </div>
       </div>
