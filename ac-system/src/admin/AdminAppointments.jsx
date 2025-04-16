@@ -395,32 +395,37 @@ const AdminAppointments = () => {
           </div>
         </div>
 
-        {/* Reject Modal */}
-        <Modal
-          isOpen={isConfirmModalOpen}
-          title="Confirm Rejection"
-          message="Are you sure you want to reject this appointment?"
-          onConfirm={handleConfirmReject}
-          onCancel={handleCancelModal}
-        />
+       
 
-        {/* Accept Modal */}
-        <Modal
-          isOpen={isAcceptModalOpen}
-          title="Confirm Acceptance"
-          message="Are you sure you want to accept this appointment?"
-          onConfirm={() => handleAcceptAppointment(selectedAppointmentId)}
-          onCancel={handleCancelModal}
-        />
+          {/* Reject Modal */}
+          <Modal
+            isOpen={isConfirmModalOpen}
+            title="Confirm Rejection"
+            message="Are you sure you want to reject this appointment?"
+            onConfirm={handleConfirmReject}
+            onCancel={handleCancelModal}
+            actionType="reject"
+          />
 
-        {/* Complete Modal */}
-        <Modal
-          isOpen={isCompleteModalOpen}
-          title="Confirm Completion"
-          message="Are you sure you want to mark this appointment as completed?"
-          onConfirm={() => completeAppointment(selectedAppointmentId)}
-          onCancel={handleCancelModal}
-        />
+          {/* Accept Modal */}
+          <Modal
+            isOpen={isAcceptModalOpen}
+            title="Confirm Acceptance"
+            message="Are you sure you want to accept this appointment?"
+            onConfirm={() => handleAcceptAppointment(selectedAppointmentId)}
+            onCancel={handleCancelModal}
+            actionType="accept"
+          />
+
+          {/* Complete Modal */}
+          <Modal
+            isOpen={isCompleteModalOpen}
+            title="Confirm Completion"
+            message="Are you sure you want to mark this appointment as completed?"
+            onConfirm={() => completeAppointment(selectedAppointmentId)}
+            onCancel={handleCancelModal}
+            actionType="complete"
+          />
       </div>
     </PageWrapper>
   );
