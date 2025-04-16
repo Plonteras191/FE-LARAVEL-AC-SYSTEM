@@ -9,14 +9,20 @@ const RevenueHistory = () => {
   const [history, setHistory] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-
+  
   // Load revenue history from the Laravel backend API
-  useEffect(() => {
+  const loadRevenueHistory = () => {
     setIsLoading(true);
+    
     axios.get(`${API_BASE_URL}/revenue-history`)
       .then(response => {
         if (response.data.history) {
-          setHistory(response.data.history);
+          // Ensure we have valid data
+          const validHistory = response.data.history.map(entry => ({
+            ...entry,
+            total_revenue: parseFloat(entry.total_revenue) || 0
+          }));
+          setHistory(validHistory);
           setTotalAmount(parseFloat(response.data.totalAmount) || 0);
         } else {
           setHistory([]);
@@ -30,7 +36,21 @@ const RevenueHistory = () => {
         setTotalAmount(0);
         setIsLoading(false);
       });
+  };
+
+  useEffect(() => {
+    loadRevenueHistory();
   }, []);
+
+  // Format currency properly with error handling
+  const formatCurrency = (amount) => {
+    // Ensure amount is a number before using toFixed
+    const numAmount = Number(amount);
+    if (isNaN(numAmount)) {
+      return '₱ 0.00'; // Return default value if conversion fails
+    }
+    return `₱ ${numAmount.toFixed(2)}`;
+  };
 
   return (
     <div className="revenue-history-container">
@@ -57,21 +77,25 @@ const RevenueHistory = () => {
                 <thead>
                   <tr>
                     <th>Date Recorded</th>
-                    <th>Total Revenue (Php)</th>
+                    <th>Service Type</th>
+                    <th>Booking ID</th>
+                    <th>Total Revenue</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {history.map((entry) => (
-                    <tr key={entry.id}>
+                  {history.map((entry, index) => (
+                    <tr key={index}>
                       <td className="date-column">{entry.revenue_date}</td>
-                      <td className="amount-column">₱ {parseFloat(entry.total_revenue).toFixed(2)}</td>
+                      <td className="service-column">{entry.service_types || 'N/A'}</td>
+                      <td className="booking-column">{entry.booking_id || 'N/A'}</td>
+                      <td className="amount-column">{formatCurrency(entry.total_revenue)}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr>
-                    <td className="total-label">All-time Total</td>
-                    <td className="total-value">₱ {totalAmount.toFixed(2)}</td>
+                    <td colSpan="3" className="total-label">All-time Total</td>
+                    <td className="total-value">{formatCurrency(totalAmount)}</td>
                   </tr>
                 </tfoot>
               </table>
@@ -84,7 +108,7 @@ const RevenueHistory = () => {
               </div>
               <div className="summary-card">
                 <div className="summary-title">All-time Revenue</div>
-                <div className="summary-value revenue-total">₱ {totalAmount.toFixed(2)}</div>
+                <div className="summary-value revenue-total">{formatCurrency(totalAmount)}</div>
               </div>
             </div>
           </>

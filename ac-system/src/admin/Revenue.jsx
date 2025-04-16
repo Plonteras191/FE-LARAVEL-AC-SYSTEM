@@ -12,6 +12,7 @@ const Revenue = () => {
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalDiscount, setTotalDiscount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // On mount, load completed appointments from localStorage
   useEffect(() => {
@@ -95,6 +96,19 @@ const Revenue = () => {
     setTotalDiscount(totalDisc);
   };
 
+  // Extract service info for each appointment
+  const getAppointmentServices = (appt) => {
+    if (!appt.services) return [];
+    
+    try {
+      const services = JSON.parse(appt.services);
+      return services.map(s => s.type);
+    } catch (error) {
+      console.error("Error parsing services:", error);
+      return [];
+    }
+  };
+
   // Save computed revenue to revenue history via the Laravel backend API
   const saveRevenue = () => {
     // Validate that every appointment has a revenue amount
@@ -109,24 +123,41 @@ const Revenue = () => {
     }
 
     setIsLoading(true);
+    setSaveSuccess(false);
 
     // Create an array of appointment IDs for the revenue record
     const appointmentIds = appointments.map(appt => appt.id);
 
+    // Create appointment details with service information
+    const appointmentDetails = appointments.map(appt => {
+      const grossRevenue = parseFloat(revenueData[appt.id] || 0);
+      const discountPercent = parseFloat(discountData[appt.id] || 0);
+      const discountAmount = getDiscountAmount(appt.id);
+      const netRevenue = computeNetRevenue(appt.id);
+      const services = getAppointmentServices(appt);
+      
+      return {
+        id: appt.id,
+        gross_revenue: grossRevenue,
+        discount_percent: discountPercent,
+        discount_amount: discountAmount,
+        net_revenue: netRevenue,
+        service_types: services
+      };
+    });
+
     // Create a new revenue record with discount information
     const revenueRecord = {
       revenue_date: new Date().toISOString().slice(0, 10), // Format: 'YYYY-MM-DD'
-      total_revenue: totalRevenue, // This is now the net revenue (after discounts)
+      total_revenue: totalRevenue, // Net revenue (after discounts)
       total_discount: totalDiscount,
       appointments: appointmentIds,
-      appointment_details: appointments.map(appt => ({
-        id: appt.id,
-        gross_revenue: parseFloat(revenueData[appt.id] || 0),
-        discount_percent: parseFloat(discountData[appt.id] || 0),
-        discount_amount: getDiscountAmount(appt.id),
-        net_revenue: computeNetRevenue(appt.id)
-      }))
+      appointment_details: appointmentDetails,
+      service_types: appointmentDetails.map(d => d.service_types).flat()
     };
+
+    // For debugging - log the data being sent
+    console.log("Sending revenue data:", revenueRecord);
 
     // POST the new revenue record to the Laravel backend API endpoint
     axios.post(`${API_BASE_URL}/revenue-history`, revenueRecord)
@@ -134,12 +165,15 @@ const Revenue = () => {
         if (response.data.success) {
           // Clear localStorage for completed appointments and reset component state
           localStorage.removeItem('completedAppointments');
-          setAppointments([]);
-          setRevenueData({});
-          setDiscountData({});
-          setTotalRevenue(0);
-          setTotalDiscount(0);
-         
+          setSaveSuccess(true);
+          setTimeout(() => {
+            setAppointments([]);
+            setRevenueData({});
+            setDiscountData({});
+            setTotalRevenue(0);
+            setTotalDiscount(0);
+            setSaveSuccess(false);
+          }, 2000);
         } else {
           alert("Error saving revenue: " + (response.data.error || "Unknown error."));
         }
@@ -259,6 +293,12 @@ const Revenue = () => {
                   <span className="button-icon">💾</span>
                   {isLoading ? 'Saving...' : 'Save Record'}
                 </button>
+                {saveSuccess && (
+                  <div className="success-message">
+                    <span className="success-icon">✅</span>
+                    Revenue saved successfully!
+                  </div>
+                )}
               </div>
               <div className="summary-details">
                 <div className="summary-item">

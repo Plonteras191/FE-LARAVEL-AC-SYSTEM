@@ -1,212 +1,156 @@
-/* Revenue History Component Styles */
+/* RevenueHistory.css */
+
 .revenue-history-container {
-  padding: 2rem;
+  padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Header Section */
 .revenue-history-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.revenue-history-header h2 {
-  color: #1a73e8;
-  font-size: 2.2rem;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
+  margin-bottom: 20px;
 }
 
 .revenue-history-subtitle {
-  color: #5f6368;
-  font-size: 1.1rem;
-  margin-top: 0;
+  color: #666;
+  margin-bottom: 20px;
 }
 
-/* Revenue History Box */
 .revenue-history-box {
   background-color: #fff;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-  padding: 2.5rem;
-  position: relative;
-  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
 }
 
-/* Empty State Styling */
-.no-data-message {
-  text-align: center;
-  padding: 3rem 1rem;
-  color: #5f6368;
+.filter-controls {
+  display: flex;
+  margin-bottom: 20px;
+  align-items: center;
 }
 
-.empty-state-icon {
-  font-size: 3.5rem;
-  margin-bottom: 1rem;
-  opacity: 0.7;
+.filter-group {
+  display: flex;
+  align-items: center;
+  margin-right: 20px;
 }
 
-.empty-state-hint {
-  font-size: 0.9rem;
-  margin-top: 1rem;
-  color: #9aa0a6;
+.filter-group label {
+  margin-right: 10px;
+  font-weight: 500;
 }
 
-/* Table Styling */
+.service-filter {
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  background-color: #fff;
+  min-width: 180px;
+}
+
 .table-container {
   overflow-x: auto;
-  margin-bottom: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
 }
 
 .revenue-history-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  border-radius: 8px;
-  overflow: hidden;
+}
+
+.revenue-history-table th,
+.revenue-history-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
 }
 
 .revenue-history-table th {
-  background-color: #1a73e8;
-  color: white;
-  padding: 1rem;
-  text-transform: uppercase;
-  font-size: 0.9rem;
-  letter-spacing: 0.5px;
-  font-weight: 500;
-  text-align: left;
-}
-
-.revenue-history-table td {
-  padding: 1rem;
-  border-bottom: 1px solid #e8eaed;
-  color: #3c4043;
-  font-size: 0.95rem;
-}
-
-.revenue-history-table tr:hover {
   background-color: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+}
+
+.revenue-history-table tbody tr:hover {
+  background-color: #f9f9f9;
 }
 
 .date-column {
-  font-weight: 500;
+  white-space: nowrap;
+}
+
+.service-column {
+  min-width: 120px;
+}
+
+.booking-column {
+  text-align: center;
 }
 
 .amount-column {
-  font-weight: 600;
-  color: #34a853;
-}
-
-/* Table Footer */
-.revenue-history-table tfoot tr {
-  background-color: #f1f8ff;
-}
-
-.revenue-history-table tfoot td {
-  padding: 1rem;
-  border-top: 2px solid #e8eaed;
-  border-bottom: none;
+  text-align: right;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .total-label {
+  text-align: right;
   font-weight: 600;
-  font-size: 1.1rem;
-  color: #3c4043;
+  padding-right: 15px;
 }
 
 .total-value {
+  text-align: right;
   font-weight: 700;
-  font-size: 1.1rem;
-  color: #1a73e8;
+  color: #2c7be5;
 }
 
-/* Summary Cards */
 .history-summary {
   display: flex;
-  gap: 1.5rem;
   justify-content: space-around;
-  flex-wrap: wrap;
-  margin-top: 2rem;
+  margin-top: 20px;
 }
 
 .summary-card {
   background-color: #f8f9fa;
-  border-radius: 10px;
-  padding: 1.5rem;
-  min-width: 200px;
-  flex: 1;
+  border-radius: 6px;
+  padding: 15px 25px;
   text-align: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.summary-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  flex: 1;
+  margin: 0 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .summary-title {
-  font-size: 1rem;
-  color: #5f6368;
-  margin-bottom: 0.5rem;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
 }
 
 .summary-value {
-  font-size: 1.8rem;
+  font-size: 24px;
   font-weight: 600;
-  color: #1a73e8;
+  color: #333;
 }
 
 .revenue-total {
-  color: #34a853;
+  color: #28a745;
 }
 
-/* Responsive Adjustments */
-@media (max-width: 992px) {
-  .revenue-history-container {
-    padding: 1.5rem;
-  }
-  
-  .revenue-history-box {
-    padding: 1.5rem;
-  }
-  
-  .summary-card {
-    min-width: 160px;
-  }
+.loading-message,
+.no-data-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
 }
 
-@media (max-width: 768px) {
-  .history-summary {
-    flex-direction: column;
-    gap: 1rem;
-    max-width: 400px;
-    margin: 2rem auto 0;
-  }
-  
-  .summary-card {
-    width: 100%;
-  }
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
 }
 
-@media (max-width: 576px) {
-  .revenue-history-container {
-    padding: 1rem;
-  }
-  
-  .revenue-history-box {
-    padding: 1rem;
-  }
-  
-  .revenue-history-header h2 {
-    font-size: 1.8rem;
-  }
-  
-  .revenue-history-subtitle {
-    font-size: 1rem;
-  }
+.empty-state-hint {
+  font-size: 14px;
+  color: #888;
+  margin-top: 10px;
 }
