@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { 
   FaCheckCircle, 
   FaClock, 
@@ -13,13 +12,12 @@ import {
 } from 'react-icons/fa';
 import '../styles/AdminReports.css';
 import * as XLSX from 'xlsx';
-
-// Base URL for Laravel API
-const API_BASE_URL = 'http://localhost:8000/api';
+import apiClient, { appointmentsApi } from '../services/api';
 
 const AdminReports = () => {
   const [appointments, setAppointments] = useState([]);
   const [revenueHistory, setRevenueHistory] = useState([]);
+  const [totalRevenueAmount, setTotalRevenueAmount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [revenueFilter, setRevenueFilter] = useState('monthly'); // 'weekly', 'monthly'
@@ -28,8 +26,8 @@ const AdminReports = () => {
   useEffect(() => {
     setIsLoading(true);
     
-    // Fetch all appointments
-    axios.get(`${API_BASE_URL}/appointments`)
+    // Fetch all appointments using the appointments API service
+    appointmentsApi.getAll()
       .then(response => {
         let data = response.data;
         if (!Array.isArray(data)) data = [data];
@@ -40,18 +38,25 @@ const AdminReports = () => {
       });
 
     // Fetch revenue history from backend
-    axios.get(`${API_BASE_URL}/revenue-history`)
+    apiClient.get('/revenue-history')
       .then(response => {
         if (response.data && response.data.history) {
-          const history = response.data.history;
-          setRevenueHistory(history);
+          // Ensure we have valid data
+          const validHistory = response.data.history.map(entry => ({
+            ...entry,
+            total_revenue: parseFloat(entry.total_revenue) || 0
+          }));
+          setRevenueHistory(validHistory);
+          setTotalRevenueAmount(parseFloat(response.data.totalAmount) || 0);
         } else {
           setRevenueHistory([]);
+          setTotalRevenueAmount(0);
         }
       })
       .catch(error => {
         console.error("Error fetching revenue history:", error);
         setRevenueHistory([]);
+        setTotalRevenueAmount(0);
       })
       .finally(() => {
         setIsLoading(false);
@@ -98,7 +103,7 @@ const AdminReports = () => {
       if (!groups[periodKey]) {
         groups[periodKey] = 0;
       }
-      groups[periodKey] += parseFloat(entry.total_revenue);
+      groups[periodKey] += parseFloat(entry.total_revenue) || 0;
     });
     
     // Convert to array and sort
@@ -160,25 +165,36 @@ const AdminReports = () => {
     }
   };
 
+  // Format currency properly with error handling
+  const formatCurrency = (amount) => {
+    // Ensure amount is a number before using toFixed
+    const numAmount = Number(amount);
+    if (isNaN(numAmount)) {
+      return '₱ 0.00'; // Return default value if conversion fails
+    }
+    return `₱ ${numAmount.toFixed(2)}`;
+  };
+
   // Export data to CSV
   const exportToCSV = (data, filename) => {
     const csvData = [];
     
     // Add headers
     if (activeTab === 'revenue') {
-      csvData.push(['Period', 'Revenue (₱)', 'Percentage of Total']);
+      csvData.push(['Date Recorded', 'Service Type', 'Booking ID', 'Total Revenue']);
       
       // Add data rows
-      data.forEach(entry => {
+      revenueHistory.forEach(entry => {
         csvData.push([
-          formatPeriod(entry.period),
-          entry.total.toFixed(2),
-          (entry.total / totalRevenue * 100).toFixed(1) + '%'
+          entry.revenue_date,
+          entry.service_types || 'N/A',
+          entry.booking_id || 'N/A',
+          formatCurrency(entry.total_revenue)
         ]);
       });
       
       // Add total row
-      csvData.push(['Total', totalRevenue.toFixed(2), '100%']);
+      csvData.push(['Total', '', '', formatCurrency(totalRevenueAmount)]);
     } else {
       // Add appointment headers
       csvData.push(['ID', 'Name', 'Status', 'Contact', 'Email', 'Address', 'Services']);
@@ -227,17 +243,19 @@ const AdminReports = () => {
     
     if (activeTab === 'revenue') {
       // Format revenue data for Excel
-      const excelData = data.map(entry => ({
-        'Period': formatPeriod(entry.period),
-        'Revenue (₱)': entry.total.toFixed(2),
-        'Percentage of Total': (entry.total / totalRevenue * 100).toFixed(1) + '%'
+      const excelData = revenueHistory.map(entry => ({
+        'Date Recorded': entry.revenue_date,
+        'Service Type': entry.service_types || 'N/A',
+        'Booking ID': entry.booking_id || 'N/A',
+        'Total Revenue': formatCurrency(entry.total_revenue)
       }));
       
       // Add total row
       excelData.push({
-        'Period': 'Total',
-        'Revenue (₱)': totalRevenue.toFixed(2),
-        'Percentage of Total': '100%'
+        'Date Recorded': 'Total',
+        'Service Type': '',
+        'Booking ID': '',
+        'Total Revenue': formatCurrency(totalRevenueAmount)
       });
       
       worksheet = XLSX.utils.json_to_sheet(excelData);
@@ -289,8 +307,8 @@ const AdminReports = () => {
         filename = 'rejected-appointments';
         break;
       case 'revenue':
-        data = filteredRevenueData;
-        filename = `revenue-history-${revenueFilter}`;
+        data = revenueHistory;
+        filename = `revenue-history`;
         break;
       default:
         data = appointments;
@@ -351,7 +369,7 @@ const AdminReports = () => {
             <FaChartLine />
           </div>
           <div className="stat-info">
-            <h3>₱{totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
+            <h3>{formatCurrency(totalRevenueAmount)}</h3>
             <p>Total Revenue</p>
           </div>
         </div>
@@ -666,46 +684,63 @@ const AdminReports = () => {
         )}
 
         {activeTab === 'revenue' && (
-          <div className="full-width-section">
-            <h3>
-              <FaMoneyBillWave className="report-icon" /> 
-              Revenue History ({revenueFilter === 'weekly' ? 'Weekly' : 'Monthly'})
-            </h3>
+          <div className="revenue-history-container">
+            <div className="revenue-history-header">
+              <h3><FaMoneyBillWave className="report-icon" /> Revenue History</h3>
+              <p className="revenue-history-subtitle">View and track your historical revenue records</p>
+            </div>
             
-            {filteredRevenueData.length > 0 ? (
-              <table className="revenue-history-table full-table">
-                <thead>
-                  <tr>
-                    <th>{revenueFilter === 'weekly' ? 'Week' : 'Month'}</th>
-                    <th>Revenue (₱)</th>
-                    <th>% of Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredRevenueData.map((entry, index) => (
-                    <tr key={index}>
-                      <td>{formatPeriod(entry.period)}</td>
-                      <td>₱{entry.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                      <td>
-                        <div className="percentage-bar">
-                          <div 
-                            className="percentage-fill" 
-                            style={{ width: `${(entry.total / totalRevenue * 100).toFixed(1)}%` }}
-                          ></div>
-                          <span>{(entry.total / totalRevenue * 100).toFixed(1)}%</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  <tr className="total-row">
-                    <td><strong>Total</strong></td>
-                    <td colSpan={2}><strong>₱{totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></td>
-                  </tr>
-                </tbody>
-              </table>
-            ) : (
-              <div className="empty-state">No revenue history found.</div>
-            )}
+            <div className="revenue-history-box">
+              {revenueHistory.length === 0 ? (
+                <div className="no-data-message">
+                  <div className="empty-state-icon">📊</div>
+                  <p>No revenue history available.</p>
+                  <p className="empty-state-hint">Revenue records you save will appear here.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="table-container">
+                    <table className="revenue-history-table">
+                      <thead>
+                        <tr>
+                          <th>Date Recorded</th>
+                          <th>Service Type</th>
+                          <th>Booking ID</th>
+                          <th>Total Revenue</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {revenueHistory.map((entry, index) => (
+                          <tr key={index}>
+                            <td className="date-column">{entry.revenue_date}</td>
+                            <td className="service-column">{entry.service_types || 'N/A'}</td>
+                            <td className="booking-column">{entry.booking_id || 'N/A'}</td>
+                            <td className="amount-column">{formatCurrency(entry.total_revenue)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <td colSpan="3" className="total-label">All-time Total</td>
+                          <td className="total-value">{formatCurrency(totalRevenueAmount)}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                  
+                  <div className="history-summary">
+                    <div className="summary-card">
+                      <div className="summary-title">Total Records</div>
+                      <div className="summary-value">{revenueHistory.length}</div>
+                    </div>
+                    <div className="summary-card">
+                      <div className="summary-title">All-time Revenue</div>
+                      <div className="summary-value revenue-total">{formatCurrency(totalRevenueAmount)}</div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         )}
       </div>

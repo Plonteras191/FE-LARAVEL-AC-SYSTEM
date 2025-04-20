@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import Modal from '../components/Modal';
 import { useNavigate } from 'react-router-dom';
 import '../styles/AdminAppointments.css';
 import PageWrapper from '../components/PageWrapper';
-
-// Base URL for Laravel API
-const API_BASE_URL = 'http://localhost:8000/api';
+import { appointmentsApi } from '../services/api';
 
 const AdminAppointments = () => {
   const [appointments, setAppointments] = useState([]);
@@ -28,7 +25,7 @@ const AdminAppointments = () => {
   }, []);
 
   const fetchAppointments = () => {
-    axios.get(`${API_BASE_URL}/appointments`)
+    appointmentsApi.getAll()
       .then(response => {
         let data = response.data;
         if (!Array.isArray(data)) data = [data];
@@ -49,7 +46,7 @@ const AdminAppointments = () => {
   // Delete (reject) appointment
   const handleCancelAppointment = async (id) => {
     try {
-      await axios.delete(`${API_BASE_URL}/appointments/${id}`);
+      await appointmentsApi.delete(id);
       setAppointments(prev => prev.filter(appt => appt.id !== id));
     } catch (error) {
       console.error("Error deleting appointment:", error);
@@ -120,7 +117,7 @@ const AdminAppointments = () => {
     if (!newDate) return;
     const payload = { service_name: serviceType, new_date: newDate };
     try {
-      const response = await axios.put(`${API_BASE_URL}/appointments/${appointmentId}?action=reschedule`, payload);
+      const response = await appointmentsApi.reschedule(appointmentId, payload);
       if (response.data && !response.data.error) {
         setAppointments(prev =>
           prev.map(appt => (appt.id === appointmentId ? response.data : appt))
@@ -151,7 +148,7 @@ const AdminAppointments = () => {
   // Accept appointment by sending a POST request with action=accept
   const handleAcceptAppointment = async (id) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/appointments/${id}/accept`);
+      const response = await appointmentsApi.accept(id);
       if (
         response.data &&
         response.data.status &&
@@ -169,7 +166,7 @@ const AdminAppointments = () => {
 
   // Complete appointment: update its status to "Completed"
   const completeAppointment = (id) => {
-    axios.post(`${API_BASE_URL}/appointments/${id}/complete`)
+    appointmentsApi.complete(id)
       .then(response => {
         const updatedAppointment = response.data;
         
@@ -395,37 +392,35 @@ const AdminAppointments = () => {
           </div>
         </div>
 
-       
+        {/* Reject Modal */}
+        <Modal
+          isOpen={isConfirmModalOpen}
+          title="Confirm Rejection"
+          message="Are you sure you want to reject this appointment?"
+          onConfirm={handleConfirmReject}
+          onCancel={handleCancelModal}
+          actionType="reject"
+        />
 
-          {/* Reject Modal */}
-          <Modal
-            isOpen={isConfirmModalOpen}
-            title="Confirm Rejection"
-            message="Are you sure you want to reject this appointment?"
-            onConfirm={handleConfirmReject}
-            onCancel={handleCancelModal}
-            actionType="reject"
-          />
+        {/* Accept Modal */}
+        <Modal
+          isOpen={isAcceptModalOpen}
+          title="Confirm Acceptance"
+          message="Are you sure you want to accept this appointment?"
+          onConfirm={() => handleAcceptAppointment(selectedAppointmentId)}
+          onCancel={handleCancelModal}
+          actionType="accept"
+        />
 
-          {/* Accept Modal */}
-          <Modal
-            isOpen={isAcceptModalOpen}
-            title="Confirm Acceptance"
-            message="Are you sure you want to accept this appointment?"
-            onConfirm={() => handleAcceptAppointment(selectedAppointmentId)}
-            onCancel={handleCancelModal}
-            actionType="accept"
-          />
-
-          {/* Complete Modal */}
-          <Modal
-            isOpen={isCompleteModalOpen}
-            title="Confirm Completion"
-            message="Are you sure you want to mark this appointment as completed?"
-            onConfirm={() => completeAppointment(selectedAppointmentId)}
-            onCancel={handleCancelModal}
-            actionType="complete"
-          />
+        {/* Complete Modal */}
+        <Modal
+          isOpen={isCompleteModalOpen}
+          title="Confirm Completion"
+          message="Are you sure you want to mark this appointment as completed?"
+          onConfirm={() => completeAppointment(selectedAppointmentId)}
+          onCancel={handleCancelModal}
+          actionType="complete"
+        />
       </div>
     </PageWrapper>
   );

@@ -1,31 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import PageWrapper from '../components/PageWrapper';
-import axios from 'axios';
-import '../styles/Dashboard.css';
-import { 
-  FaCalendarAlt, 
-  FaMoneyBillWave
-} from 'react-icons/fa';
-
-// Base URL for Laravel API
-const API_BASE_URL = 'http://localhost:8000/api';
+import apiClient, { appointmentsApi } from '../services/api';
+import '../styles/index.css';
+import { FaCalendarAlt } from 'react-icons/fa';
 
 const Dashboard = () => {
   const [appointments, setAppointments] = useState([]);
   const [revenueHistory, setRevenueHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   // Fetch all necessary data when component mounts
   useEffect(() => {
     const fetchAllData = async () => {
       try {
-        setLoading(true);
         await fetchAppointments();
         await fetchRevenueHistory();
-        setLoading(false);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
-        setLoading(false);
       }
     };
 
@@ -38,7 +28,7 @@ const Dashboard = () => {
   // Fetch all appointments
   const fetchAppointments = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/appointments`);
+      const response = await appointmentsApi.getAll();
       let data = response.data;
       if (!Array.isArray(data)) data = [data];
       setAppointments(data);
@@ -52,7 +42,7 @@ const Dashboard = () => {
   // Fetch revenue history
   const fetchRevenueHistory = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/revenue-history`);
+      const response = await apiClient.get('/revenue-history');
       if (response.data && response.data.history) {
         const history = response.data.history;
         setRevenueHistory(history);
@@ -90,39 +80,121 @@ const Dashboard = () => {
 
   return (
     <PageWrapper>
-      <div className="dashboard-main">
-        <h1 className="dashboard-title">Admin Dashboard</h1>
-        
-        <div className="date-display">
-          <FaCalendarAlt /> {new Date().toLocaleDateString('en-US', {
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric'
-          })}
-        </div>
-        
-        {/* Summary Cards */}
-        <div className="summary-cards">
-          <div className="summary-card total">
-            <h3>Total Appointments</h3>
-            <p className="count">{stats.total}</p>
+      <div className="bg-white min-h-screen p-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Header Section */}
+          <div className="flex flex-col md:flex-row justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
+            <div className="flex items-center gap-2 text-blue-600 mt-4 md:mt-0">
+              <FaCalendarAlt className="text-blue-500" />
+              <span className="font-medium">
+                {new Date().toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </span>
+            </div>
           </div>
-          <div className="summary-card pending">
-            <h3>Pending</h3>
-            <p className="count">{stats.pending}</p>
+          
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            {/* Total Appointments Card */}
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-sm p-6 border border-blue-200">
+              <div className="flex flex-col">
+                <h3 className="text-sm font-medium text-blue-800 mb-1">Total Appointments</h3>
+                <p className="text-3xl font-bold text-blue-900">{stats.total}</p>
+              </div>
+            </div>
+            
+            {/* Pending Card */}
+            <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl shadow-sm p-6 border border-amber-200">
+              <div className="flex flex-col">
+                <h3 className="text-sm font-medium text-amber-800 mb-1">Pending</h3>
+                <p className="text-3xl font-bold text-amber-900">{stats.pending}</p>
+              </div>
+            </div>
+            
+            {/* Accepted Card */}
+            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm p-6 border border-green-200">
+              <div className="flex flex-col">
+                <h3 className="text-sm font-medium text-green-800 mb-1">Accepted</h3>
+                <p className="text-3xl font-bold text-green-900">{stats.accepted}</p>
+              </div>
+            </div>
+            
+            {/* Completed Card */}
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-sm p-6 border border-purple-200">
+              <div className="flex flex-col">
+                <h3 className="text-sm font-medium text-purple-800 mb-1">Completed</h3>
+                <p className="text-3xl font-bold text-purple-900">{stats.completed}</p>
+              </div>
+            </div>
+            
+            {/* Revenue Card */}
+            <div className="bg-gradient-to-br from-sky-50 to-sky-100 rounded-xl shadow-sm p-6 border border-sky-200">
+              <div className="flex flex-col">
+                <h3 className="text-sm font-medium text-sky-800 mb-1">Total Revenue</h3>
+                <p className="text-3xl font-bold text-sky-900">
+                  ₱{totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="summary-card accepted">
-            <h3>Accepted</h3>
-            <p className="count">{stats.accepted}</p>
-          </div>
-          <div className="summary-card completed">
-            <h3>Completed</h3>
-            <p className="count">{stats.completed}</p>
-          </div>
-          <div className="summary-card revenue">
-            <h3>Total Revenue</h3>
-            <p className="count">₱{totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          
+          {/* Quick Stats Section */}
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Quick Stats</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Acceptance Rate */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Acceptance Rate</span>
+                  <span className="font-medium">
+                    {stats.total ? Math.round((stats.accepted / stats.total) * 100) : 0}%
+                  </span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-2">
+                  <div 
+                    className="bg-blue-500 h-2 rounded-full" 
+                    style={{ width: `${stats.total ? Math.round((stats.accepted / stats.total) * 100) : 0}%` }}
+                  ></div>
+                </div>
+              </div>
+              
+              {/* Completion Rate */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Completion Rate</span>
+                  <span className="font-medium">
+                    {stats.total ? Math.round((stats.completed / stats.total) * 100) : 0}%
+                  </span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-2">
+                  <div 
+                    className="bg-green-500 h-2 rounded-full" 
+                    style={{ width: `${stats.total ? Math.round((stats.completed / stats.total) * 100) : 0}%` }}
+                  ></div>
+                </div>
+              </div>
+              
+              {/* Rejection Rate */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Rejection Rate</span>
+                  <span className="font-medium">
+                    {stats.total ? Math.round((stats.rejected / stats.total) * 100) : 0}%
+                  </span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-2">
+                  <div 
+                    className="bg-red-500 h-2 rounded-full" 
+                    style={{ width: `${stats.total ? Math.round((stats.rejected / stats.total) * 100) : 0}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

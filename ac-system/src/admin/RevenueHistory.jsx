@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiClient from '../services/api';
 import '../styles/RevenueHistory.css';
-
-// Base URL for Laravel API
-const API_BASE_URL = 'http://localhost:8000/api';
 
 const RevenueHistory = () => {
   const [history, setHistory] = useState([]);
@@ -14,7 +11,7 @@ const RevenueHistory = () => {
   const loadRevenueHistory = () => {
     setIsLoading(true);
     
-    axios.get(`${API_BASE_URL}/revenue-history`)
+    apiClient.get('/revenue-history')
       .then(response => {
         if (response.data.history) {
           // Ensure we have valid data

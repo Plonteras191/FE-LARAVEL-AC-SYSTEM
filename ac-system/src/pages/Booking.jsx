@@ -4,10 +4,7 @@ import DatePicker from 'react-datepicker';
 import { parseISO, format } from 'date-fns';
 import "react-datepicker/dist/react-datepicker.css";
 import '../styles/Booking.css';
-import axios from 'axios';
-
-// Base URL for Laravel API
-const API_BASE_URL = 'http://localhost:8000/api';
+import apiClient from '../services/api';
 
 const serviceOptions = {
   cleaning: "Cleaning",
@@ -29,8 +26,8 @@ const Booking = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch available dates from Laravel backend
-    axios.get(`${API_BASE_URL}/getAvailableDates`, {
+    // Fetch available dates from Laravel backend using the apiClient
+    apiClient.get('/getAvailableDates', {
       params: { 
         global: 1, 
         start: '2025-01-01', 
@@ -128,8 +125,8 @@ const Booking = () => {
       }))
     };
 
-    // Send booking data to Laravel backend
-    axios.post(`${API_BASE_URL}/booking`, bookingData)
+    // Send booking data to Laravel backend using the apiClient
+    apiClient.post('/booking', bookingData)
       .then(response => {
         console.log("Response from backend:", response.data);
         if (response.data.bookingId) {

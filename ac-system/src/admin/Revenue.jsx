@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiClient from '../services/api';
 import '../styles/Revenue.css';
-
-// Base URL for Laravel API
-const API_BASE_URL = 'http://localhost:8000/api';
 
 const Revenue = () => {
   const [appointments, setAppointments] = useState([]);
@@ -160,7 +157,7 @@ const Revenue = () => {
     console.log("Sending revenue data:", revenueRecord);
 
     // POST the new revenue record to the Laravel backend API endpoint
-    axios.post(`${API_BASE_URL}/revenue-history`, revenueRecord)
+    apiClient.post('/revenue-history', revenueRecord)
       .then(response => {
         if (response.data.success) {
           // Clear localStorage for completed appointments and reset component state

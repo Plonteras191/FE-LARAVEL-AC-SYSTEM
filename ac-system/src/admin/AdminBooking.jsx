@@ -4,10 +4,7 @@ import { parseISO, format } from 'date-fns';
 import "react-datepicker/dist/react-datepicker.css";
 import Modal from '../components/Modal';
 import '../styles/Booking.css';
-import axios from 'axios';
-
-// Base URL for API
-const API_BASE_URL = 'http://localhost:8000/api';
+import apiClient from '../services/api';
 
 const serviceOptions = {
   cleaning: "Cleaning",
@@ -31,9 +28,9 @@ const AdminBooking = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Fetch available dates using axios
+    // Fetch available dates using apiClient
     setIsLoading(true);
-    axios.get(`${API_BASE_URL}/getAvailableDates`, {
+    apiClient.get('/getAvailableDates', {
       params: { 
         global: 1, 
         start: format(new Date(), 'yyyy-MM-dd'),
@@ -138,8 +135,8 @@ const AdminBooking = () => {
       }))
     };
 
-    // Send booking data with axios
-    axios.post(`${API_BASE_URL}/booking`, bookingData)
+    // Send booking data with apiClient
+    apiClient.post('/booking', bookingData)
       .then(response => {
         console.log("Response from backend:", response.data);
         setIsLoading(false);

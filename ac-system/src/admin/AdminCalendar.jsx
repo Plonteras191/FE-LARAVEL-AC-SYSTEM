@@ -2,12 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import axios from 'axios';
-import { FaCalendarAlt, FaClock, FaTools, FaUser, FaTimes, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaCalendarAlt, FaClock, FaTools, FaUser, FaTimes, FaMapMarkerAlt, FaSnowflake } from 'react-icons/fa';
 import '../styles/AdminCalendar.css';
-
-// Base URL for Laravel API
-const API_BASE_URL = 'http://localhost:8000/api';
+import { appointmentsApi } from '../services/api';
 
 const AdminCalendar = () => {
   const [events, setEvents] = useState([]);
@@ -26,7 +23,7 @@ const AdminCalendar = () => {
 
   const fetchAppointments = () => {
     setLoading(true);
-    axios.get(`${API_BASE_URL}/appointments`)
+    appointmentsApi.getAll()
       .then(response => {
         let appointments = response.data;
         if (!Array.isArray(appointments)) appointments = [appointments];
@@ -89,7 +86,7 @@ const AdminCalendar = () => {
                   email: appt.email,
                   address: appt.complete_address,
                   status: appt.status || 'Pending',
-                  acTypes: service.acTypes || [],
+                  acTypes: service.acTypes || service.ac_types || [],
                   date: service.date
                 }
               });
@@ -155,6 +152,12 @@ const AdminCalendar = () => {
     });
   };
 
+  // Format AC Types for display
+  const formatAcTypes = (acTypes) => {
+    if (!acTypes || acTypes.length === 0) return 'None specified';
+    return acTypes.join(', ');
+  };
+
   return (
     <div className="admin-calendar-container">
       <div className="calendar-header">
@@ -214,8 +217,12 @@ const AdminCalendar = () => {
               <span>Installation</span>
             </div>
             <div className="legend-item">
-              <span className="color-box" style={{backgroundColor: '#808080'}}></span>
+              <span className="color-box" style={{backgroundColor: '#f6c23e'}}></span>
               <span>Maintenance</span>
+            </div>
+            <div className="legend-item">
+              <span className="color-box" style={{backgroundColor: '#808080'}}></span>
+              <span>Checkup</span>
             </div>
           </div>
         </div>
@@ -286,6 +293,10 @@ const AdminCalendar = () => {
                   <FaMapMarkerAlt /> 
                   <span>{hoverEvent.extendedProps.address}</span>
                 </div>
+                <div className="tooltip-detail">
+                  <FaSnowflake /> 
+                  <span>AC Types: {formatAcTypes(hoverEvent.extendedProps.acTypes)}</span>
+                </div>
                 <div className="tooltip-status">
                   <span className={`status-badge ${hoverEvent.extendedProps.status.toLowerCase().replace(' ', '-')}`}>
                     {hoverEvent.extendedProps.status}
@@ -319,11 +330,10 @@ const AdminCalendar = () => {
                 <FaTools /> 
                 <span>Service: {selectedEvent.extendedProps.service}</span>
               </div>
-              {selectedEvent.extendedProps.acTypes && selectedEvent.extendedProps.acTypes.length > 0 && (
-                <div className="event-detail">
-                  <span>AC Types: {selectedEvent.extendedProps.acTypes.join(', ')}</span>
-                </div>
-              )}
+              <div className="event-detail">
+                <FaSnowflake />
+                <span>AC Types: {formatAcTypes(selectedEvent.extendedProps.acTypes)}</span>
+              </div>
               <div className="event-detail">
                 <FaUser /> 
                 <span>Customer: {selectedEvent.extendedProps.customer}</span>
