@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
 import { parseISO, format } from 'date-fns';
 import "react-datepicker/dist/react-datepicker.css";
-import Modal from '../components/Modal';
+import BookingModal from '../components/bookingModal';
 import '../styles/Booking.css';
 import apiClient from '../services/api';
 
@@ -171,7 +171,7 @@ const AdminBooking = () => {
     document.getElementById("adminBookingForm").reset();
   };
 
-  // Close the modal without navigation
+  // Close the modal
   const handleModalClose = () => {
     setIsConfirmModalOpen(false);
   };
@@ -309,15 +309,23 @@ const AdminBooking = () => {
         </form>
       </div>
       
-      {isConfirmModalOpen && (
-        <Modal onClose={handleModalClose}>
-          <div className="confirmation-modal">
-            <h3>Booking Created Successfully</h3>
-            <p>The booking has been created with reference ID: <strong>{bookingRef}</strong></p>
+      {/* Booking Success Modal */}
+      <BookingModal 
+        isOpen={isConfirmModalOpen}
+        onClose={handleModalClose}
+        title="Booking Confirmation"
+      >
+        <div className="booking-success">
+          <h3>Booking Created Successfully!</h3>
+          <p>The booking has been successfully created and saved to the system.</p>
+          <div className="booking-reference">
+            Reference ID: <span>{bookingRef}</span>
+          </div>
+          <div className="booking-success-actions">
             <button onClick={handleModalClose}>Close</button>
           </div>
-        </Modal>
-      )}
+        </div>
+      </BookingModal>
     </div>
   );
 };

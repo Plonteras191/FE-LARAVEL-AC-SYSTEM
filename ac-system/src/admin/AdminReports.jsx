@@ -17,11 +17,11 @@ import apiClient, { appointmentsApi } from '../services/api';
 const AdminReports = () => {
   const [appointments, setAppointments] = useState([]);
   const [revenueHistory, setRevenueHistory] = useState([]);
+  const [filteredRevenueHistory, setFilteredRevenueHistory] = useState([]);
   const [totalRevenueAmount, setTotalRevenueAmount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
-  const [revenueFilter, setRevenueFilter] = useState('monthly'); // 'weekly', 'monthly'
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState('');
 
   useEffect(() => {
     setIsLoading(true);
@@ -47,21 +47,42 @@ const AdminReports = () => {
             total_revenue: parseFloat(entry.total_revenue) || 0
           }));
           setRevenueHistory(validHistory);
+          setFilteredRevenueHistory(validHistory); // Initialize with all history
           setTotalRevenueAmount(parseFloat(response.data.totalAmount) || 0);
         } else {
           setRevenueHistory([]);
+          setFilteredRevenueHistory([]);
           setTotalRevenueAmount(0);
         }
       })
       .catch(error => {
         console.error("Error fetching revenue history:", error);
         setRevenueHistory([]);
+        setFilteredRevenueHistory([]);
         setTotalRevenueAmount(0);
       })
       .finally(() => {
         setIsLoading(false);
       });
   }, []);
+
+  // Filter revenue history when date changes
+  useEffect(() => {
+    if (!selectedDate) {
+      // If no date is selected, show all revenue history
+      setFilteredRevenueHistory(revenueHistory);
+      return;
+    }
+
+    // Filter revenue history based on selected date
+    const filtered = revenueHistory.filter(entry => {
+      // Extract just the date part for comparison (not time)
+      const entryDate = entry.revenue_date.split(' ')[0];
+      return entryDate === selectedDate;
+    });
+
+    setFilteredRevenueHistory(filtered);
+  }, [selectedDate, revenueHistory]);
 
   // Filter appointments based on status
   const completeAppointments = appointments.filter(appt => 
@@ -80,43 +101,11 @@ const AdminReports = () => {
     appt.status && appt.status.toLowerCase() === 'rejected'
   );
 
-  // Group revenue history by week or month
-  const groupRevenueByPeriod = (history, periodType) => {
-    if (!history || history.length === 0) return [];
-
-    const groups = {};
-    history.forEach(entry => {
-      let periodKey;
-      const entryDate = new Date(entry.revenue_date);
-      
-      if (periodType === 'weekly') {
-        // Get the week number and year
-        const firstDayOfYear = new Date(entryDate.getFullYear(), 0, 1);
-        const pastDaysOfYear = (entryDate - firstDayOfYear) / 86400000;
-        const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
-        periodKey = `${entryDate.getFullYear()}-W${weekNumber}`;
-      } else {
-        // Monthly grouping (YYYY-MM)
-        periodKey = entry.revenue_date.substring(0, 7);
-      }
-      
-      if (!groups[periodKey]) {
-        groups[periodKey] = 0;
-      }
-      groups[periodKey] += parseFloat(entry.total_revenue) || 0;
-    });
-    
-    // Convert to array and sort
-    return Object.entries(groups)
-      .map(([period, total]) => ({ period, total }))
-      .sort((a, b) => a.period.localeCompare(b.period));
-  };
-
-  // Revenue data based on current filter
-  const filteredRevenueData = groupRevenueByPeriod(revenueHistory, revenueFilter);
-  
-  // Calculate total revenue
-  const totalRevenue = filteredRevenueData.reduce((sum, entry) => sum + entry.total, 0);
+  // Calculate total filtered revenue
+  const filteredTotalRevenue = filteredRevenueHistory.reduce(
+    (sum, entry) => sum + parseFloat(entry.total_revenue || 0), 
+    0
+  );
 
   // Helper function to parse services JSON string
   const parseServices = (servicesStr) => {
@@ -147,24 +136,6 @@ const AdminReports = () => {
     }
   };
 
-  // Format period for display
-  const formatPeriod = (periodStr) => {
-    try {
-      if (revenueFilter === 'weekly') {
-        // Format: 2023-W12 => Week 12, 2023
-        const [year, week] = periodStr.split('-W');
-        return `Week ${week}, ${year}`;
-      } else {
-        // Format: YYYY-MM => Month YYYY
-        const [year, month] = periodStr.split('-');
-        const date = new Date(year, parseInt(month) - 1);
-        return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      }
-    } catch {
-      return periodStr;
-    }
-  };
-
   // Format currency properly with error handling
   const formatCurrency = (amount) => {
     // Ensure amount is a number before using toFixed
@@ -175,6 +146,16 @@ const AdminReports = () => {
     return `₱ ${numAmount.toFixed(2)}`;
   };
 
+  // Handle date selection
+  const handleDateChange = (e) => {
+    setSelectedDate(e.target.value);
+  };
+
+  // Clear date filter
+  const clearDateFilter = () => {
+    setSelectedDate('');
+  };
+
   // Export data to CSV
   const exportToCSV = (data, filename) => {
     const csvData = [];
@@ -183,8 +164,8 @@ const AdminReports = () => {
     if (activeTab === 'revenue') {
       csvData.push(['Date Recorded', 'Service Type', 'Booking ID', 'Total Revenue']);
       
-      // Add data rows
-      revenueHistory.forEach(entry => {
+      // Add data rows - export filtered data
+      filteredRevenueHistory.forEach(entry => {
         csvData.push([
           entry.revenue_date,
           entry.service_types || 'N/A',
@@ -194,7 +175,7 @@ const AdminReports = () => {
       });
       
       // Add total row
-      csvData.push(['Total', '', '', formatCurrency(totalRevenueAmount)]);
+      csvData.push(['Total', '', '', formatCurrency(filteredTotalRevenue)]);
     } else {
       // Add appointment headers
       csvData.push(['ID', 'Name', 'Status', 'Contact', 'Email', 'Address', 'Services']);
@@ -242,8 +223,8 @@ const AdminReports = () => {
     let worksheet;
     
     if (activeTab === 'revenue') {
-      // Format revenue data for Excel
-      const excelData = revenueHistory.map(entry => ({
+      // Format revenue data for Excel - use filtered data
+      const excelData = filteredRevenueHistory.map(entry => ({
         'Date Recorded': entry.revenue_date,
         'Service Type': entry.service_types || 'N/A',
         'Booking ID': entry.booking_id || 'N/A',
@@ -255,7 +236,7 @@ const AdminReports = () => {
         'Date Recorded': 'Total',
         'Service Type': '',
         'Booking ID': '',
-        'Total Revenue': formatCurrency(totalRevenueAmount)
+        'Total Revenue': formatCurrency(filteredTotalRevenue)
       });
       
       worksheet = XLSX.utils.json_to_sheet(excelData);
@@ -307,8 +288,8 @@ const AdminReports = () => {
         filename = 'rejected-appointments';
         break;
       case 'revenue':
-        data = revenueHistory;
-        filename = `revenue-history`;
+        data = filteredRevenueHistory;
+        filename = `revenue-history${selectedDate ? '-' + selectedDate : ''}`;
         break;
       default:
         data = appointments;
@@ -428,24 +409,27 @@ const AdminReports = () => {
             </button>
           </div>
           
-          {/* Revenue filtering controls */}
+          {/* Revenue date filter */}
           {activeTab === 'revenue' && (
             <div className="revenue-filter-controls">
               <div className="filter-group">
-                <label>View by:</label>
-                <div className="filter-toggle">
-                  <button 
-                    className={revenueFilter === 'weekly' ? 'active' : ''} 
-                    onClick={() => setRevenueFilter('weekly')}
-                  >
-                    Weekly
-                  </button>
-                  <button 
-                    className={revenueFilter === 'monthly' ? 'active' : ''} 
-                    onClick={() => setRevenueFilter('monthly')}
-                  >
-                    Monthly
-                  </button>
+                <label>Filter by date:</label>
+                <div className="date-filter">
+                  <input 
+                    type="date" 
+                    className="date-picker"
+                    value={selectedDate}
+                    onChange={handleDateChange}
+                  />
+                  {selectedDate && (
+                    <button 
+                      className="clear-filter-btn"
+                      onClick={clearDateFilter}
+                      title="Clear date filter"
+                    >
+                      Clear
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -687,15 +671,25 @@ const AdminReports = () => {
           <div className="revenue-history-container">
             <div className="revenue-history-header">
               <h3><FaMoneyBillWave className="report-icon" /> Revenue History</h3>
-              <p className="revenue-history-subtitle">View and track your historical revenue records</p>
+              <p className="revenue-history-subtitle">
+                {selectedDate 
+                  ? `Viewing revenue for: ${new Date(selectedDate).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}`
+                  : 'View and track your historical revenue records'
+                }
+              </p>
             </div>
             
             <div className="revenue-history-box">
-              {revenueHistory.length === 0 ? (
+              {filteredRevenueHistory.length === 0 ? (
                 <div className="no-data-message">
                   <div className="empty-state-icon">📊</div>
-                  <p>No revenue history available.</p>
-                  <p className="empty-state-hint">Revenue records you save will appear here.</p>
+                  <p>{selectedDate ? 'No revenue records found for the selected date.' : 'No revenue history available.'}</p>
+                  {selectedDate && <button className="clear-filter-btn" onClick={clearDateFilter}>Clear Filter</button>}
+                  {!selectedDate && <p className="empty-state-hint">Revenue records you save will appear here.</p>}
                 </div>
               ) : (
                 <>
@@ -710,7 +704,7 @@ const AdminReports = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {revenueHistory.map((entry, index) => (
+                        {filteredRevenueHistory.map((entry, index) => (
                           <tr key={index}>
                             <td className="date-column">{entry.revenue_date}</td>
                             <td className="service-column">{entry.service_types || 'N/A'}</td>
@@ -721,8 +715,10 @@ const AdminReports = () => {
                       </tbody>
                       <tfoot>
                         <tr>
-                          <td colSpan="3" className="total-label">All-time Total</td>
-                          <td className="total-value">{formatCurrency(totalRevenueAmount)}</td>
+                          <td colSpan="3" className="total-label">
+                            {selectedDate ? 'Selected Date Total' : 'All-time Total'}
+                          </td>
+                          <td className="total-value">{formatCurrency(filteredTotalRevenue)}</td>
                         </tr>
                       </tfoot>
                     </table>
@@ -730,12 +726,16 @@ const AdminReports = () => {
                   
                   <div className="history-summary">
                     <div className="summary-card">
-                      <div className="summary-title">Total Records</div>
-                      <div className="summary-value">{revenueHistory.length}</div>
+                      <div className="summary-title">
+                        {selectedDate ? 'Filtered Records' : 'Total Records'}
+                      </div>
+                      <div className="summary-value">{filteredRevenueHistory.length}</div>
                     </div>
                     <div className="summary-card">
-                      <div className="summary-title">All-time Revenue</div>
-                      <div className="summary-value revenue-total">{formatCurrency(totalRevenueAmount)}</div>
+                      <div className="summary-title">
+                        {selectedDate ? 'Filtered Revenue' : 'All-time Revenue'}
+                      </div>
+                      <div className="summary-value revenue-total">{formatCurrency(filteredTotalRevenue)}</div>
                     </div>
                   </div>
                 </>

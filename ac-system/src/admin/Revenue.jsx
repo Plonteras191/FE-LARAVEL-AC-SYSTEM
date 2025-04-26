@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../services/api';
+import BookingModal from '../components/bookingModal';
 import '../styles/Revenue.css';
 
 const Revenue = () => {
@@ -10,6 +11,7 @@ const Revenue = () => {
   const [totalDiscount, setTotalDiscount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // On mount, load completed appointments from localStorage
   useEffect(() => {
@@ -106,6 +108,18 @@ const Revenue = () => {
     }
   };
 
+  // Handle closing the success modal
+  const closeSuccessModal = () => {
+    setShowSuccessModal(false);
+    // Reset component state after closing modal
+    setAppointments([]);
+    setRevenueData({});
+    setDiscountData({});
+    setTotalRevenue(0);
+    setTotalDiscount(0);
+    setSaveSuccess(false);
+  };
+
   // Save computed revenue to revenue history via the Laravel backend API
   const saveRevenue = () => {
     // Validate that every appointment has a revenue amount
@@ -160,21 +174,16 @@ const Revenue = () => {
     apiClient.post('/revenue-history', revenueRecord)
       .then(response => {
         if (response.data.success) {
-          // Clear localStorage for completed appointments and reset component state
+          // Clear localStorage for completed appointments and set success state
           localStorage.removeItem('completedAppointments');
           setSaveSuccess(true);
-          setTimeout(() => {
-            setAppointments([]);
-            setRevenueData({});
-            setDiscountData({});
-            setTotalRevenue(0);
-            setTotalDiscount(0);
-            setSaveSuccess(false);
-          }, 2000);
+          // Show success modal instead of just the inline message
+          setShowSuccessModal(true);
+          setIsLoading(false);
         } else {
           alert("Error saving revenue: " + (response.data.error || "Unknown error."));
+          setIsLoading(false);
         }
-        setIsLoading(false);
       })
       .catch(error => {
         console.error("Error saving revenue:", error);
@@ -290,12 +299,6 @@ const Revenue = () => {
                   <span className="button-icon">💾</span>
                   {isLoading ? 'Saving...' : 'Save Record'}
                 </button>
-                {saveSuccess && (
-                  <div className="success-message">
-                    <span className="success-icon">✅</span>
-                    Revenue saved successfully!
-                  </div>
-                )}
               </div>
               <div className="summary-details">
                 <div className="summary-item">
@@ -311,6 +314,28 @@ const Revenue = () => {
           </>
         )}
       </div>
+
+      {/* Success Modal */}
+      <BookingModal
+        isOpen={showSuccessModal}
+        onClose={closeSuccessModal}
+        title="Revenue Saved"
+      >
+        <div className="success-modal-content">
+          <div className="success-icon-container">
+            <span className="success-icon">✅</span>
+          </div>
+          <h3>Revenue Record Saved Successfully!</h3>
+          <p>Your revenue record has been successfully saved to the system.</p>
+          <p>Total Revenue: ₱ {totalRevenue.toFixed(2)}</p>
+          <p>Total Discount: ₱ {totalDiscount.toFixed(2)}</p>
+          <div className="modal-actions">
+            <button className="modal-button modal-confirm-button" onClick={closeSuccessModal}>
+              OK
+            </button>
+          </div>
+        </div>
+      </BookingModal>
     </div>
   );
 };
