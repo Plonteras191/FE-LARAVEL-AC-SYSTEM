@@ -4,11 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import '../styles/AdminAppointments.css';
 import PageWrapper from '../components/PageWrapper';
 import { appointmentsApi } from '../services/api';
+import { toast } from 'react-toastify'; // Import toast if you're using react-toastify
 
 const AdminAppointments = () => {
   const [appointments, setAppointments] = useState([]);
   const [acceptedAppointments, setAcceptedAppointments] = useState([]);
   const [rescheduleInputs, setRescheduleInputs] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
   
   // Modal states
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -25,6 +27,7 @@ const AdminAppointments = () => {
   }, []);
 
   const fetchAppointments = () => {
+    setIsLoading(true);
     appointmentsApi.getAll()
       .then(response => {
         let data = response.data;
@@ -40,16 +43,27 @@ const AdminAppointments = () => {
         );
         setAcceptedAppointments(accepted);
       })
-      .catch(error => console.error("Error fetching appointments:", error));
+      .catch(error => {
+        console.error("Error fetching appointments:", error);
+        toast.error("Failed to load appointments");
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   };
 
   // Delete (reject) appointment
   const handleCancelAppointment = async (id) => {
     try {
+      setIsLoading(true);
       await appointmentsApi.delete(id);
       setAppointments(prev => prev.filter(appt => appt.id !== id));
+      toast.success("Appointment rejected successfully");
     } catch (error) {
       console.error("Error deleting appointment:", error);
+      toast.error("Failed to reject appointment");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -117,6 +131,7 @@ const AdminAppointments = () => {
     if (!newDate) return;
     const payload = { service_name: serviceType, new_date: newDate };
     try {
+      setIsLoading(true);
       const response = await appointmentsApi.reschedule(appointmentId, payload);
       if (response.data && !response.data.error) {
         setAppointments(prev =>
@@ -127,11 +142,16 @@ const AdminAppointments = () => {
           delete newState[key];
           return newState;
         });
+        toast.success("Service rescheduled successfully");
       } else {
         console.error("Backend error:", response.data.error);
+        toast.error(response.data.error || "Failed to reschedule service");
       }
     } catch (error) {
       console.error("Error rescheduling service:", error);
+      toast.error("Failed to reschedule service");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -148,6 +168,7 @@ const AdminAppointments = () => {
   // Accept appointment by sending a POST request with action=accept
   const handleAcceptAppointment = async (id) => {
     try {
+      setIsLoading(true);
       const response = await appointmentsApi.accept(id);
       if (
         response.data &&
@@ -156,16 +177,25 @@ const AdminAppointments = () => {
       ) {
         // If appointment accepted successfully, refresh data
         fetchAppointments();
+        toast.success("Appointment accepted and confirmation email sent.");
       }
     } catch (error) {
       console.error("Error accepting appointment:", error);
+      if (error.response && error.response.data && error.response.data.error) {
+        toast.error(error.response.data.error);
+      } else {
+        toast.error("Failed to accept appointment");
+      }
+    } finally {
+      setIsLoading(false);
+      setIsAcceptModalOpen(false);
+      setSelectedAppointmentId(null);
     }
-    setIsAcceptModalOpen(false);
-    setSelectedAppointmentId(null);
   };
 
   // Complete appointment: update its status to "Completed"
   const completeAppointment = (id) => {
+    setIsLoading(true);
     appointmentsApi.complete(id)
       .then(response => {
         const updatedAppointment = response.data;
@@ -183,10 +213,17 @@ const AdminAppointments = () => {
 
         // Refresh appointments
         fetchAppointments();
+        toast.success("Appointment marked as completed");
       })
-      .catch(error => console.error("Error completing appointment:", error));
-    setIsCompleteModalOpen(false);
-    setSelectedAppointmentId(null);
+      .catch(error => {
+        console.error("Error completing appointment:", error);
+        toast.error("Failed to complete appointment");
+      })
+      .finally(() => {
+        setIsLoading(false);
+        setIsCompleteModalOpen(false);
+        setSelectedAppointmentId(null);
+      });
   };
 
   // Utility function to parse services JSON string
@@ -232,7 +269,8 @@ const AdminAppointments = () => {
     <PageWrapper>
       <div className="admin-appointments-container">
         <h2>Admin Appointments</h2>
-        {appointments.length === 0 ? (
+        {isLoading && <div className="loading-spinner">Loading...</div>}
+        {appointments.length === 0 && !isLoading ? (
           <p>No pending appointments available.</p>
         ) : (
           <table className="appointments-table">
@@ -280,13 +318,14 @@ const AdminAppointments = () => {
                                   <button
                                     className="confirm-button"
                                     onClick={() => handleServiceRescheduleConfirm(appt.id, s.type, index)}
-                                    disabled={!rescheduleInputs[key]}
+                                    disabled={!rescheduleInputs[key] || isLoading}
                                   >
                                     Confirm
                                   </button>
                                   <button
                                     className="cancel-button"
                                     onClick={() => handleRescheduleCancel(appt.id, s.type, index)}
+                                    disabled={isLoading}
                                   >
                                     Cancel
                                   </button>
@@ -295,6 +334,7 @@ const AdminAppointments = () => {
                                 <button
                                   className="reschedule-button"
                                   onClick={() => toggleRescheduleInput(appt.id, s.type, index)}
+                                  disabled={isLoading}
                                 >
                                   Reschedule
                                 </button>
@@ -322,10 +362,18 @@ const AdminAppointments = () => {
                     <td>{appt.complete_address}</td>
                     <td>{appt.status || 'Pending'}</td>
                     <td>
-                      <button className="reject-button" onClick={() => openRejectModal(appt.id)}>
+                      <button 
+                        className="reject-button" 
+                        onClick={() => openRejectModal(appt.id)}
+                        disabled={isLoading}
+                      >
                         Reject
                       </button>
-                      <button className="accept-button" onClick={() => openAcceptModal(appt.id)}>
+                      <button 
+                        className="accept-button" 
+                        onClick={() => openAcceptModal(appt.id)}
+                        disabled={isLoading}
+                      >
                         Accept
                       </button>
                     </td>
@@ -378,6 +426,7 @@ const AdminAppointments = () => {
                         <button
                           className="complete-button"
                           onClick={() => openCompleteModal(appointment.id)}
+                          disabled={isLoading}
                         >
                           Complete
                         </button>
@@ -406,7 +455,7 @@ const AdminAppointments = () => {
         <Modal
           isOpen={isAcceptModalOpen}
           title="Confirm Acceptance"
-          message="Are you sure you want to accept this appointment?"
+          message="Are you sure you want to accept this appointment? A confirmation email will be sent to the customer."
           onConfirm={() => handleAcceptAppointment(selectedAppointmentId)}
           onCancel={handleCancelModal}
           actionType="accept"
