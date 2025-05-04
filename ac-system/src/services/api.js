@@ -1,5 +1,5 @@
 import axios from 'axios';
-//src/services/api.js
+
 // Base URL for Laravel API
 export const API_BASE_URL = 'http://localhost:8000/api';
 
@@ -15,7 +15,7 @@ const apiClient = axios.create({
 // API endpoints functions
 export const appointmentsApi = {
   getAll: () => apiClient.get('/appointments'),
-  delete: (id) => apiClient.delete(`/appointments/${id}`),
+  delete: (id, reason = '') => apiClient.delete(`/appointments/${id}`, { data: { reason } }), // Updated to support reason
   accept: (id) => apiClient.post(`/appointments/${id}/accept`),
   complete: (id) => apiClient.post(`/appointments/${id}/complete`),
   reschedule: (id, payload) => apiClient.put(`/appointments/${id}?action=reschedule`, payload)

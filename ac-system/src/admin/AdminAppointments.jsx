@@ -58,7 +58,7 @@ const AdminAppointments = () => {
       setIsLoading(true);
       await appointmentsApi.delete(id);
       setAppointments(prev => prev.filter(appt => appt.id !== id));
-      toast.success("Appointment rejected successfully");
+      toast.success("Appointment rejected successfully and notification email sent");
     } catch (error) {
       console.error("Error deleting appointment:", error);
       toast.error("Failed to reject appointment");
@@ -445,7 +445,7 @@ const AdminAppointments = () => {
         <Modal
           isOpen={isConfirmModalOpen}
           title="Confirm Rejection"
-          message="Are you sure you want to reject this appointment?"
+          message="Are you sure you want to reject this appointment? A notification email will be sent to the customer."
           onConfirm={handleConfirmReject}
           onCancel={handleCancelModal}
           actionType="reject"
