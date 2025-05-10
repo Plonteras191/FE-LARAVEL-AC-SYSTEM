@@ -1,5 +1,5 @@
 import React from 'react';
-import '../styles/AdminAppointments.css';
+import '../styles/Modal.css';
 
 const Modal = ({ isOpen, title, message, onConfirm, onCancel, actionType }) => {
   if (!isOpen) return null;

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import PageWrapper from '../components/PageWrapper';
 import apiClient, { appointmentsApi } from '../services/api';
 import '../styles/index.css';
-import { FaCalendarAlt, FaBell, FaChartLine, FaCheck, FaClock, FaTimes } from 'react-icons/fa';
+import { FaCalendarAlt, FaBell, FaChartLine, FaCheck, FaClock, FaTimes, FaUser } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Dashboard = () => {
@@ -242,10 +242,15 @@ const Dashboard = () => {
     <PageWrapper>
       <div className="bg-gray-50 min-h-screen">
         {/* Top Navigation Bar */}
-        <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+        <div className="bg-white shadow-md border-b border-gray-200 sticky top-0 z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
-              <h1 className="text-xl font-semibold text-gray-800">Admin Dashboard</h1>
+              <h1 className="text-xl font-bold text-gray-800 flex items-center">
+                <span className="bg-blue-500 text-white p-2 rounded-lg mr-2 hidden sm:inline-flex">
+                  <FaChartLine className="h-5 w-5" />
+                </span>
+                Admin Dashboard
+              </h1>
               
               {/* Right side controls */}
               <div className="flex items-center space-x-4">
@@ -265,7 +270,7 @@ const Dashboard = () => {
                 {/* Notification Bell */}
                 <div className="relative" ref={notificationRef}>
                   <button 
-                    className="p-2 rounded-full hover:bg-gray-100 focus:outline-none relative"
+                    className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all relative"
                     onClick={() => setShowNotifications(!showNotifications)}
                   >
                     <FaBell className="text-gray-600 h-5 w-5" />
@@ -284,14 +289,14 @@ const Dashboard = () => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
                         transition={{ duration: 0.2 }}
-                        className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-200"
+                        className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl py-2 z-50 border border-gray-200 overflow-hidden"
                       >
-                        <div className="px-4 py-2 border-b border-gray-200 flex justify-between items-center">
-                          <h3 className="text-sm font-medium text-gray-700">Notifications</h3>
+                        <div className="px-4 py-2 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                          <h3 className="text-sm font-semibold text-gray-700">Notifications</h3>
                           {notifications.length > 0 && (
                             <button 
                               onClick={clearAllNotifications} 
-                              className="text-xs text-blue-600 hover:text-blue-800"
+                              className="text-xs text-blue-600 hover:text-blue-800 font-medium"
                             >
                               Clear all
                             </button>
@@ -307,7 +312,7 @@ const Dashboard = () => {
                             notifications.map(notification => (
                               <div 
                                 key={notification.id}
-                                className={`px-4 py-3 border-b border-gray-100 hover:bg-blue-50 cursor-pointer ${!notification.read ? 'bg-blue-50' : ''}`}
+                                className={`px-4 py-3 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors ${!notification.read ? 'bg-blue-50' : ''}`}
                                 onClick={() => handleNotificationClick(notification)}
                               >
                                 <div className="flex justify-between items-start">
@@ -326,9 +331,9 @@ const Dashboard = () => {
                   </AnimatePresence>
                 </div>
                 
-                {/* User Profile - placeholder for future implementation */}
-                <div className="h-8 w-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-medium">
-                  A
+                {/* User Profile */}
+                <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white flex items-center justify-center font-medium shadow-sm">
+                  <FaUser className="h-4 w-4" />
                 </div>
               </div>
             </div>
@@ -344,15 +349,20 @@ const Dashboard = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.1 }}
-              className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:shadow-md transition-shadow"
+              className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:shadow-md transition-shadow duration-300"
             >
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Total Appointments</p>
                   <h3 className="mt-2 text-3xl font-bold text-gray-900">{stats.total}</h3>
                 </div>
-                <div className="p-2 bg-blue-100 rounded-lg">
+                <div className="p-3 bg-blue-100 rounded-lg">
                   <FaCalendarAlt className="h-5 w-5 text-blue-600" />
+                </div>
+              </div>
+              <div className="mt-4">
+                <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-1 bg-blue-500 rounded-full" style={{ width: '100%' }}></div>
                 </div>
               </div>
             </motion.div>
@@ -362,21 +372,26 @@ const Dashboard = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.2 }}
-              className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:shadow-md transition-shadow"
+              className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:shadow-md transition-shadow duration-300"
             >
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Pending</p>
                   <h3 className="mt-2 text-3xl font-bold text-amber-600">{stats.pending}</h3>
                 </div>
-                <div className="p-2 bg-amber-100 rounded-lg">
+                <div className="p-3 bg-amber-100 rounded-lg">
                   <FaClock className="h-5 w-5 text-amber-600" />
+                </div>
+              </div>
+              <div className="mt-4">
+                <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-1 bg-amber-500 rounded-full" style={{ width: `${stats.total ? Math.round((stats.pending / stats.total) * 100) : 0}%` }}></div>
                 </div>
               </div>
               {stats.pending > 0 && (
                 <div className="mt-4 pt-3 border-t border-gray-100">
-                  <p className="text-xs text-red-600 flex items-center gap-1">
-                    <span className="animate-pulse">●</span> 
+                  <p className="text-xs text-red-600 flex items-center gap-2 font-medium">
+                    <span className="animate-pulse flex h-2 w-2 rounded-full bg-red-500"></span> 
                     Requires attention
                   </p>
                 </div>
@@ -388,15 +403,20 @@ const Dashboard = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.3 }}
-              className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:shadow-md transition-shadow"
+              className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:shadow-md transition-shadow duration-300"
             >
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Accepted</p>
                   <h3 className="mt-2 text-3xl font-bold text-green-600">{stats.accepted}</h3>
                 </div>
-                <div className="p-2 bg-green-100 rounded-lg">
+                <div className="p-3 bg-green-100 rounded-lg">
                   <FaCheck className="h-5 w-5 text-green-600" />
+                </div>
+              </div>
+              <div className="mt-4">
+                <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-1 bg-green-500 rounded-full" style={{ width: `${stats.total ? Math.round((stats.accepted / stats.total) * 100) : 0}%` }}></div>
                 </div>
               </div>
             </motion.div>
@@ -406,25 +426,30 @@ const Dashboard = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.4 }}
-              className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:shadow-md transition-shadow"
+              className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:shadow-md transition-shadow duration-300"
             >
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Completed</p>
                   <h3 className="mt-2 text-3xl font-bold text-purple-600">{stats.completed}</h3>
                 </div>
-                <div className="p-2 bg-purple-100 rounded-lg">
+                <div className="p-3 bg-purple-100 rounded-lg">
                   <FaCheck className="h-5 w-5 text-purple-600" />
+                </div>
+              </div>
+              <div className="mt-4">
+                <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-1 bg-purple-500 rounded-full" style={{ width: `${stats.total ? Math.round((stats.completed / stats.total) * 100) : 0}%` }}></div>
                 </div>
               </div>
             </motion.div>
             
-            {/* Revenue Card - Updated for Monthly Revenue */}
+            {/* Revenue Card */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.5 }}
-              className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:shadow-md transition-shadow"
+              className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:shadow-md transition-shadow duration-300"
             >
               <div className="flex justify-between items-start">
                 <div>
@@ -433,33 +458,41 @@ const Dashboard = () => {
                     ₱{currentMonthRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </h3>
                 </div>
-                <div className="p-2 bg-sky-100 rounded-lg">
-                  <FaChartLine className="h-5 w-5 text-sky-600" />
+
+              </div>
+              <div className="mt-4">
+                <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-1 bg-sky-500 rounded-full" style={{ width: '60%' }}></div>
                 </div>
               </div>
             </motion.div>
           </div>
           
-          {/* Quick Stats Section */}
+          {/* Performance Metrics Section */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.6 }}
             className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 mb-8"
           >
-            <h2 className="text-lg font-semibold text-gray-800 mb-6">Performance Metrics</h2>
+            <h2 className="text-lg font-semibold text-gray-800 mb-6 flex items-center">
+              <span className="bg-indigo-100 p-2 rounded-lg mr-2">
+                <FaChartLine className="h-4 w-4 text-indigo-600" />
+              </span>
+              Performance Metrics
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {/* Acceptance Rate */}
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Acceptance Rate</span>
-                  <span className="text-sm font-semibold text-gray-900">
+                  <span className="text-sm text-gray-600 font-medium">Acceptance Rate</span>
+                  <span className="text-sm font-semibold text-gray-900 bg-blue-50 px-2 py-1 rounded">
                     {stats.total ? Math.round((stats.accepted / stats.total) * 100) : 0}%
                   </span>
                 </div>
-                <div className="w-full bg-gray-100 rounded-full h-2.5">
+                <div className="w-full bg-gray-100 rounded-full h-3">
                   <div 
-                    className="bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-in-out" 
+                    className="bg-blue-600 h-3 rounded-full transition-all duration-500 ease-in-out" 
                     style={{ width: `${stats.total ? Math.round((stats.accepted / stats.total) * 100) : 0}%` }}
                   ></div>
                 </div>
@@ -468,14 +501,14 @@ const Dashboard = () => {
               {/* Completion Rate */}
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Completion Rate</span>
-                  <span className="text-sm font-semibold text-gray-900">
+                  <span className="text-sm text-gray-600 font-medium">Completion Rate</span>
+                  <span className="text-sm font-semibold text-gray-900 bg-green-50 px-2 py-1 rounded">
                     {stats.total ? Math.round((stats.completed / stats.total) * 100) : 0}%
                   </span>
                 </div>
-                <div className="w-full bg-gray-100 rounded-full h-2.5">
+                <div className="w-full bg-gray-100 rounded-full h-3">
                   <div 
-                    className="bg-green-600 h-2.5 rounded-full transition-all duration-500 ease-in-out" 
+                    className="bg-green-600 h-3 rounded-full transition-all duration-500 ease-in-out" 
                     style={{ width: `${stats.total ? Math.round((stats.completed / stats.total) * 100) : 0}%` }}
                   ></div>
                 </div>
@@ -484,14 +517,14 @@ const Dashboard = () => {
               {/* Rejection Rate */}
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Rejection Rate</span>
-                  <span className="text-sm font-semibold text-gray-900">
+                  <span className="text-sm text-gray-600 font-medium">Rejection Rate</span>
+                  <span className="text-sm font-semibold text-gray-900 bg-red-50 px-2 py-1 rounded">
                     {stats.total ? Math.round((stats.rejected / stats.total) * 100) : 0}%
                   </span>
                 </div>
-                <div className="w-full bg-gray-100 rounded-full h-2.5">
+                <div className="w-full bg-gray-100 rounded-full h-3">
                   <div 
-                    className="bg-red-600 h-2.5 rounded-full transition-all duration-500 ease-in-out" 
+                    className="bg-red-600 h-3 rounded-full transition-all duration-500 ease-in-out" 
                     style={{ width: `${stats.total ? Math.round((stats.rejected / stats.total) * 100) : 0}%` }}
                   ></div>
                 </div>

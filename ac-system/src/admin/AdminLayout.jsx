@@ -1,4 +1,3 @@
-// src/components/AdminLayout.jsx
 import React, { useContext } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
@@ -6,11 +5,11 @@ import { AuthContext } from '../context/AuthContext';
 import '../styles/AdminLayout.css';
 
 const AdminLayout = () => {
-  const { logout } = useContext(AuthContext);
+  const { logout, user } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/admin/login');
   };
 
@@ -46,11 +45,6 @@ const AdminLayout = () => {
           <li>
             <NavLink to="/admin/revenue" className={({ isActive }) => isActive ? 'active' : ''}>
               Revenue
-            </NavLink>
-          </li>
-          <li>
-            <NavLink to="/admin/revenue-history" className={({ isActive }) => isActive ? 'active' : ''}>
-              Revenue History
             </NavLink>
           </li>
         </ul>

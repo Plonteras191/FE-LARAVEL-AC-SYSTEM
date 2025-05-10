@@ -4,6 +4,10 @@ import BookingModal from '../components/bookingModal';
 import '../styles/Revenue.css';
 
 const Revenue = () => {
+  // State for active tab
+  const [activeTab, setActiveTab] = useState('revenue');
+  
+  // Revenue management states
   const [appointments, setAppointments] = useState([]);
   const [revenueData, setRevenueData] = useState({});
   const [discountData, setDiscountData] = useState({});
@@ -13,19 +17,49 @@ const Revenue = () => {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // On mount, load completed appointments from localStorage
+  // Revenue history states
+  const [history, setHistory] = useState([]);
+  const [totalAmount, setTotalAmount] = useState(0);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+
+  // On mount, load completed appointments from localStorage for revenue tab
   useEffect(() => {
-    const storedAppointments = localStorage.getItem('completedAppointments');
-    if (storedAppointments) {
-      const parsedAppointments = JSON.parse(storedAppointments);
-      setAppointments(parsedAppointments);
+    if (activeTab === 'revenue') {
+      const storedAppointments = localStorage.getItem('completedAppointments');
+      if (storedAppointments) {
+        const parsedAppointments = JSON.parse(storedAppointments);
+        setAppointments(parsedAppointments);
+      }
     }
-  }, []);
+  }, [activeTab]);
 
   // Auto-compute total whenever revenue or discount values change
   useEffect(() => {
     computeTotalRevenue();
   }, [revenueData, discountData]);
+
+  // Load revenue history when history tab is active
+  useEffect(() => {
+    if (activeTab === 'history') {
+      loadRevenueHistory();
+    }
+  }, [activeTab, currentPage, itemsPerPage]);
+
+  // Calculate pagination
+  useEffect(() => {
+    if (history.length > 0) {
+      setTotalPages(Math.ceil(history.length / itemsPerPage));
+    } else {
+      setTotalPages(1);
+    }
+  }, [history, itemsPerPage]);
+
+  // REVENUE MANAGEMENT FUNCTIONS
 
   const handleRevenueChange = (id, value) => {
     // Prevent negative values
@@ -118,6 +152,9 @@ const Revenue = () => {
     setTotalRevenue(0);
     setTotalDiscount(0);
     setSaveSuccess(false);
+    // Switch to history tab to see the newly added record
+    setActiveTab('history');
+    loadRevenueHistory();
   };
 
   // Save computed revenue to revenue history via the Laravel backend API
@@ -208,13 +245,118 @@ const Revenue = () => {
     return { service: "N/A", date: "N/A" };
   };
 
-  return (
-    <div className="revenue-container">
-      <div className="revenue-header">
-        <h2>Revenue Management</h2>
-        <p className="revenue-subtitle">Track and manage completed service appointments</p>
+  // REVENUE HISTORY FUNCTIONS
+
+  // Load revenue history from the Laravel backend API
+  const loadRevenueHistory = () => {
+    setHistoryLoading(true);
+    
+    apiClient.get('/revenue-history', {
+      params: {
+        page: currentPage,
+        perPage: itemsPerPage
+      }
+    })
+      .then(response => {
+        if (response.data.history) {
+          // Ensure we have valid data
+          const validHistory = response.data.history.map(entry => ({
+            ...entry,
+            total_revenue: parseFloat(entry.total_revenue) || 0
+          }));
+          setHistory(validHistory);
+          setTotalAmount(parseFloat(response.data.totalAmount) || 0);
+        } else {
+          setHistory([]);
+          setTotalAmount(0);
+        }
+        setHistoryLoading(false);
+      })
+      .catch(error => {
+        console.error("Error fetching revenue history:", error);
+        setHistory([]);
+        setTotalAmount(0);
+        setHistoryLoading(false);
+      });
+  };
+
+  // Format currency properly with error handling
+  const formatCurrency = (amount) => {
+    // Ensure amount is a number before using toFixed
+    const numAmount = Number(amount);
+    if (isNaN(numAmount)) {
+      return '₱ 0.00'; // Return default value if conversion fails
+    }
+    return `₱ ${numAmount.toFixed(2)}`;
+  };
+
+  // Pagination handlers
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (e) => {
+    setItemsPerPage(parseInt(e.target.value));
+    setCurrentPage(1); // Reset to first page when changing items per page
+  };
+
+  // Calculate current page items for pagination
+  const getCurrentPageItems = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return history.slice(startIndex, endIndex);
+  };
+
+  // Render pagination controls
+  const renderPagination = () => {
+    const pages = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(
+        <button
+          key={i}
+          className={`pagination-button ${currentPage === i ? 'active' : ''}`}
+          onClick={() => handlePageChange(i)}
+        >
+          {i}
+        </button>
+      );
+    }
+
+    return (
+      <div className="pagination-controls">
+        <button 
+          className="pagination-button"
+          onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+          disabled={currentPage === 1}
+        >
+          &lt;
+        </button>
+        {pages}
+        <button 
+          className="pagination-button"
+          onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+          disabled={currentPage === totalPages}
+        >
+          &gt;
+        </button>
+        <div className="items-per-page">
+          <span>Items per page:</span>
+          <select value={itemsPerPage} onChange={handleItemsPerPageChange}>
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+          </select>
+        </div>
       </div>
-      
+    );
+  };
+
+  // RENDER UI COMPONENTS
+
+  // Render Revenue Management Tab
+  const renderRevenueTab = () => {
+    return (
       <div className="revenue-box">
         {appointments.length === 0 ? (
           <div className="no-data-message">
@@ -314,6 +456,105 @@ const Revenue = () => {
           </>
         )}
       </div>
+    );
+  };
+
+  // Render Revenue History Tab
+  const renderHistoryTab = () => {
+    return (
+      <div className="revenue-history-box">
+        {historyLoading ? (
+          <div className="loading-message">
+            <p>Loading revenue history...</p>
+          </div>
+        ) : history.length === 0 ? (
+          <div className="no-data-message">
+            <div className="empty-state-icon">📊</div>
+            <p>No revenue history available.</p>
+            <p className="empty-state-hint">Revenue records you save will appear here.</p>
+          </div>
+        ) : (
+          <>
+            <div className="table-container">
+              <table className="revenue-history-table">
+                <thead>
+                  <tr>
+                    <th>Date Recorded</th>
+                    <th>Service Type</th>
+                    <th>Booking ID</th>
+                    <th>Total Revenue</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {getCurrentPageItems().map((entry, index) => (
+                    <tr key={index}>
+                      <td className="date-column">{entry.revenue_date}</td>
+                      <td className="service-column">{entry.service_types || 'N/A'}</td>
+                      <td className="booking-column">{entry.booking_id || 'N/A'}</td>
+                      <td className="amount-column">{formatCurrency(entry.total_revenue)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colSpan="3" className="total-label">All-time Total</td>
+                    <td className="total-value">{formatCurrency(totalAmount)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            
+            {renderPagination()}
+            
+            <div className="history-summary">
+              <div className="summary-card">
+                <div className="summary-title">Total Records</div>
+                <div className="summary-value">{history.length}</div>
+              </div>
+              <div className="summary-card">
+                <div className="summary-title">All-time Revenue</div>
+                <div className="summary-value revenue-total">{formatCurrency(totalAmount)}</div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="revenue-container">
+      {/* Tabs Navigation */}
+      <div className="revenue-tabs">
+        <button 
+          className={`tab-button ${activeTab === 'revenue' ? 'active' : ''}`}
+          onClick={() => setActiveTab('revenue')}
+        >
+          Revenue Management
+        </button>
+        <button 
+          className={`tab-button ${activeTab === 'history' ? 'active' : ''}`}
+          onClick={() => setActiveTab('history')}
+        >
+          Revenue History
+        </button>
+      </div>
+
+      {/* Tab Headers */}
+      {activeTab === 'revenue' ? (
+        <div className="revenue-header">
+          <h2>Revenue Management</h2>
+          <p className="revenue-subtitle">Track and manage completed service appointments</p>
+        </div>
+      ) : (
+        <div className="revenue-history-header">
+          <h2>Revenue History</h2>
+          <p className="revenue-history-subtitle">View and track your historical revenue records</p>
+        </div>
+      )}
+      
+      {/* Tab Content */}
+      {activeTab === 'revenue' ? renderRevenueTab() : renderHistoryTab()}
 
       {/* Success Modal */}
       <BookingModal

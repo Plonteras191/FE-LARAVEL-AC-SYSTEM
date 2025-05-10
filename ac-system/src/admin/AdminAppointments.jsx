@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import '../styles/AdminAppointments.css';
 import PageWrapper from '../components/PageWrapper';
 import { appointmentsApi } from '../services/api';
-import { toast } from 'react-toastify'; // Import toast if you're using react-toastify
+import { toast } from 'react-toastify';
 
 const AdminAppointments = () => {
   const [appointments, setAppointments] = useState([]);
@@ -17,7 +17,12 @@ const AdminAppointments = () => {
   const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
-  const [modalType, setModalType] = useState(''); // To track which action we're confirming
+  const [modalType, setModalType] = useState('');
+  
+  // Tab and pagination states
+  const [activeTab, setActiveTab] = useState('pending');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
   
   const navigate = useNavigate();
 
@@ -265,130 +270,73 @@ const AdminAppointments = () => {
     }
   };
 
+  // Pagination handlers
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const handleItemsPerPageChange = (e) => {
+    setItemsPerPage(Number(e.target.value));
+    setCurrentPage(1); // Reset to first page when changing items per page
+  };
+
+  // Calculate pagination for current view
+  const getPaginatedData = () => {
+    const currentData = activeTab === 'pending' ? appointments : acceptedAppointments;
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    return currentData.slice(indexOfFirstItem, indexOfLastItem);
+  };
+
+  // Calculate total pages
+  const totalPages = Math.ceil(
+    (activeTab === 'pending' ? appointments.length : acceptedAppointments.length) / itemsPerPage
+  );
+
   return (
     <PageWrapper>
       <div className="admin-appointments-container">
         <h2>Admin Appointments</h2>
         {isLoading && <div className="loading-spinner">Loading...</div>}
-        {appointments.length === 0 && !isLoading ? (
-          <p>No pending appointments available.</p>
-        ) : (
-          <table className="appointments-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Customer</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Service(s)</th>
-                <th>AC Type(s)</th>
-                <th>Address</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {appointments.map((appt) => {
-                const services = parseServices(appt.services);
-                return (
-                  <tr key={appt.id}>
-                    <td>{appt.id}</td>
-                    <td>{appt.name}</td>
-                    <td>{appt.phone}</td>
-                    <td>{appt.email || 'N/A'}</td>
-                    <td>
-                      {services.length > 0 ? (
-                        services.map((s, index) => {
-                          const key = `${appt.id}-${s.type}-${index}`;
-                          return (
-                            <div key={key}>
-                              <span>
-                                {index + 1}. {s.type} on {s.date}
-                              </span>
-                              {rescheduleInputs[key] !== undefined ? (
-                                <div className="reschedule-input-container">
-                                  <input
-                                    type="date"
-                                    value={rescheduleInputs[key]}
-                                    onChange={(e) =>
-                                      handleRescheduleInputChange(appt.id, s.type, index, e.target.value)
-                                    }
-                                    className="reschedule-date-input"
-                                  />
-                                  <button
-                                    className="confirm-button"
-                                    onClick={() => handleServiceRescheduleConfirm(appt.id, s.type, index)}
-                                    disabled={!rescheduleInputs[key] || isLoading}
-                                  >
-                                    Confirm
-                                  </button>
-                                  <button
-                                    className="cancel-button"
-                                    onClick={() => handleRescheduleCancel(appt.id, s.type, index)}
-                                    disabled={isLoading}
-                                  >
-                                    Cancel
-                                  </button>
-                                </div>
-                              ) : (
-                                <button
-                                  className="reschedule-button"
-                                  onClick={() => toggleRescheduleInput(appt.id, s.type, index)}
-                                  disabled={isLoading}
-                                >
-                                  Reschedule
-                                </button>
-                              )}
-                            </div>
-                          );
-                        })
-                      ) : (
-                        'N/A'
-                      )}
-                    </td>
-                    <td>
-                      {services.length > 0 ? (
-                        services.map((s, sIndex) => (
-                          <div key={`ac-${appt.id}-${sIndex}`}>
-                            {s.ac_types && s.ac_types.length > 0
-                              ? s.ac_types.map((ac, acIndex) => `${sIndex + 1}. ${ac}`).join(', ')
-                              : 'N/A'}
-                          </div>
-                        ))
-                      ) : (
-                        'N/A'
-                      )}
-                    </td>
-                    <td>{appt.complete_address}</td>
-                    <td>{appt.status || 'Pending'}</td>
-                    <td>
-                      <button 
-                        className="reject-button" 
-                        onClick={() => openRejectModal(appt.id)}
-                        disabled={isLoading}
-                      >
-                        Reject
-                      </button>
-                      <button 
-                        className="accept-button" 
-                        onClick={() => openAcceptModal(appt.id)}
-                        disabled={isLoading}
-                      >
-                        Accept
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
+        
+        {/* Tabs */}
+        <div className="appointment-tabs">
+          <button 
+            className={`tab-button ${activeTab === 'pending' ? 'active' : ''}`}
+            onClick={() => setActiveTab('pending')}
+          >
+            Pending Appointments ({appointments.length})
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'accepted' ? 'active' : ''}`}
+            onClick={() => setActiveTab('accepted')}
+          >
+            Accepted Appointments ({acceptedAppointments.length})
+          </button>
+        </div>
 
-        {/* Dashboard's Accepted Appointments Section (transferred from Dashboard.jsx) */}
-        <h2 className="dashboard-section-title">Accepted Appointments</h2>
-        <div className="dashboard-section">
-          <div className="appointment-box">
-            {acceptedAppointments.length > 0 ? (
+        {/* Pagination Controls */}
+        <div className="pagination-controls">
+          <div className="items-per-page">
+            <label htmlFor="itemsPerPage">Items per page: </label>
+            <select 
+              id="itemsPerPage" 
+              value={itemsPerPage} 
+              onChange={handleItemsPerPageChange}
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Pending Appointments Table */}
+        {activeTab === 'pending' && (
+          <>
+            {appointments.length === 0 && !isLoading ? (
+              <p>No pending appointments available.</p>
+            ) : (
               <table className="appointments-table">
                 <thead>
                   <tr>
@@ -399,12 +347,128 @@ const AdminAppointments = () => {
                     <th>Service(s)</th>
                     <th>AC Type(s)</th>
                     <th>Address</th>
-                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {getPaginatedData().map((appt) => {
+                    const services = parseServices(appt.services);
+                    return (
+                      <tr key={appt.id}>
+                        <td>{appt.id}</td>
+                        <td>{appt.name}</td>
+                        <td>{appt.phone}</td>
+                        <td>{appt.email || 'N/A'}</td>
+                        <td>
+                          {services.length > 0 ? (
+                            services.map((s, index) => {
+                              const key = `${appt.id}-${s.type}-${index}`;
+                              return (
+                                <div key={key}>
+                                  <span>
+                                    {index + 1}. {s.type} on {s.date}
+                                  </span>
+                                  {rescheduleInputs[key] !== undefined ? (
+                                    <div className="reschedule-input-container">
+                                      <input
+                                        type="date"
+                                        value={rescheduleInputs[key]}
+                                        onChange={(e) =>
+                                          handleRescheduleInputChange(appt.id, s.type, index, e.target.value)
+                                        }
+                                        className="reschedule-date-input"
+                                      />
+                                      <button
+                                        className="confirm-button"
+                                        onClick={() => handleServiceRescheduleConfirm(appt.id, s.type, index)}
+                                        disabled={!rescheduleInputs[key] || isLoading}
+                                      >
+                                        Confirm
+                                      </button>
+                                      <button
+                                        className="cancel-button"
+                                        onClick={() => handleRescheduleCancel(appt.id, s.type, index)}
+                                        disabled={isLoading}
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      className="reschedule-button"
+                                      onClick={() => toggleRescheduleInput(appt.id, s.type, index)}
+                                      disabled={isLoading}
+                                    >
+                                      Reschedule
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })
+                          ) : (
+                            'N/A'
+                          )}
+                        </td>
+                        <td>
+                          {services.length > 0 ? (
+                            services.map((s, sIndex) => (
+                              <div key={`ac-${appt.id}-${sIndex}`}>
+                                {s.ac_types && s.ac_types.length > 0
+                                  ? s.ac_types.map((ac, acIndex) => `${sIndex + 1}. ${ac}`).join(', ')
+                                  : 'N/A'}
+                              </div>
+                            ))
+                          ) : (
+                            'N/A'
+                          )}
+                        </td>
+                        <td>{appt.complete_address}</td>
+                        <td>
+                          <button 
+                            className="reject-button" 
+                            onClick={() => openRejectModal(appt.id)}
+                            disabled={isLoading}
+                          >
+                            Reject
+                          </button>
+                          <button 
+                            className="accept-button" 
+                            onClick={() => openAcceptModal(appt.id)}
+                            disabled={isLoading}
+                          >
+                            Accept
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </>
+        )}
+
+        {/* Accepted Appointments Table */}
+        {activeTab === 'accepted' && (
+          <>
+            {acceptedAppointments.length === 0 && !isLoading ? (
+              <p>No accepted appointments available.</p>
+            ) : (
+              <table className="appointments-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Customer</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Service(s)</th>
+                    <th>AC Type(s)</th>
+                    <th>Address</th>
                     <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {acceptedAppointments.map((appointment) => (
+                  {getPaginatedData().map((appointment) => (
                     <tr key={appointment.id}>
                       <td>{appointment.id}</td>
                       <td>{appointment.name}</td>
@@ -421,7 +485,6 @@ const AdminAppointments = () => {
                           : 'N/A'}
                       </td>
                       <td>{appointment.complete_address}</td>
-                      <td>{appointment.status || 'Pending'}</td>
                       <td>
                         <button
                           className="complete-button"
@@ -435,11 +498,46 @@ const AdminAppointments = () => {
                   ))}
                 </tbody>
               </table>
-            ) : (
-              <p>No accepted appointments available.</p>
             )}
+          </>
+        )}
+
+        {/* Pagination Navigation */}
+        {totalPages > 1 && (
+          <div className="pagination-nav">
+            <button 
+              onClick={() => handlePageChange(1)}
+              disabled={currentPage === 1}
+              className="pagination-button"
+            >
+              First
+            </button>
+            <button 
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="pagination-button"
+            >
+              Previous
+            </button>
+            <span className="page-info">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button 
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="pagination-button"
+            >
+              Next
+            </button>
+            <button 
+              onClick={() => handlePageChange(totalPages)}
+              disabled={currentPage === totalPages}
+              className="pagination-button"
+            >
+              Last
+            </button>
           </div>
-        </div>
+        )}
 
         {/* Reject Modal */}
         <Modal

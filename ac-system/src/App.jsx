@@ -2,6 +2,9 @@ import React from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './routes/ProtectedRoute';
+
 import Header from './components/Header';
 import Home from './pages/Home';
 import About from './pages/About';
@@ -17,7 +20,6 @@ import AdminAppointments from './admin/AdminAppointments';
 import AdminReports from './admin/AdminReports';
 import AdminCalendar from './admin/AdminCalendar';
 import Revenue from './admin/Revenue';
-import RevenueHistory from './admin/RevenueHistory';
 import AdminBooking from './admin/AdminBooking';
 import AdminLayout from './admin/AdminLayout';
 
@@ -40,16 +42,16 @@ const AnimatedRoutes = () => {
         {/* Admin Login */}
         <Route path="/admin/login" element={<PageWrapper><AdminLogin /></PageWrapper>} />
 
-        {/* Admin Routes nested under AdminLayout */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route path="dashboard" element={<PageWrapper><Dashboard /></PageWrapper>} />
-          <Route path="appointments" element={<PageWrapper><AdminAppointments /></PageWrapper>} />
-          {/* Admin Booking route (unique path) */}
-          <Route path="admin-booking" element={<PageWrapper><AdminBooking /></PageWrapper>} />
-          <Route path="reports" element={<PageWrapper><AdminReports /></PageWrapper>} />
-          <Route path="calendar" element={<PageWrapper><AdminCalendar /></PageWrapper>} />
-          <Route path="revenue" element={<PageWrapper><Revenue /></PageWrapper>} />
-          <Route path="revenue-history" element={<PageWrapper><RevenueHistory /></PageWrapper>} />
+        {/* Protected Admin Routes nested under AdminLayout */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route path="dashboard" element={<PageWrapper><Dashboard /></PageWrapper>} />
+            <Route path="appointments" element={<PageWrapper><AdminAppointments /></PageWrapper>} />
+            <Route path="admin-booking" element={<PageWrapper><AdminBooking /></PageWrapper>} />
+            <Route path="reports" element={<PageWrapper><AdminReports /></PageWrapper>} />
+            <Route path="calendar" element={<PageWrapper><AdminCalendar /></PageWrapper>} />
+            <Route path="revenue" element={<PageWrapper><Revenue /></PageWrapper>} />
+          </Route>
         </Route>
       </Routes>
     </AnimatePresence>
@@ -58,10 +60,10 @@ const AnimatedRoutes = () => {
 
 const App = () => {
   return (
-    <>
+    <AuthProvider>
       <Header />
       <AnimatedRoutes />
-    </>
+    </AuthProvider>
   );
 };
 

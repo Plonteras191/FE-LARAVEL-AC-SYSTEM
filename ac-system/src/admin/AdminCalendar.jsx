@@ -240,8 +240,7 @@ const AdminCalendar = () => {
             initialView="dayGridMonth"
             headerToolbar={{
               left: 'prev,next today',
-              center: 'title',
-              right: 'dayGridMonth'
+              center: 'title'
             }}
             events={filteredEvents}
             eventTimeFormat={{

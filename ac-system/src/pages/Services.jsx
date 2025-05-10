@@ -4,10 +4,10 @@ import '../styles/Services.css';
 const Services = () => {
   const services = [
     {
-      title: 'Routine Maintenance and Cleaning',
-      description: 'Regular check-ups and cleaning to keep your AC running efficiently and prevent unexpected breakdowns.',
-      price: 'Price range from ₱500 - 2500',
-      icon: '🧹' // Added icons for visual appeal
+      title: 'Cleaning',
+      description: 'Professional cleaning services to maintain optimal airflow and efficiency of your air conditioning system.',
+      price: 'Price range from ₱500 - 1500',
+      icon: '🧹'
     },
     {
       title: 'Repair',
@@ -21,6 +21,12 @@ const Services = () => {
       price: 'Price range from ₱1500 - 5000',
       icon: '⚙️'
     },
+    {
+      title: 'Checkup & Maintenance',
+      description: 'Regular check-ups and preventative maintenance to keep your AC running efficiently and prevent unexpected breakdowns.',
+      price: 'Price range from ₱800 - 2500',
+      icon: '🔍'
+    }
   ];
 
   return (
@@ -39,7 +45,6 @@ const Services = () => {
               <h3>{service.title}</h3>
               <p className="service-description">{service.description}</p>
               {service.price && <p className="service-price">{service.price}</p>}
-              
             </div>
           ))}
         </div>

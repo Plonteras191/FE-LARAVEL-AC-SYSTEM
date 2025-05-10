@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 import { parseISO, format } from 'date-fns';
 import "react-datepicker/dist/react-datepicker.css";
-import '../styles/Booking.css';
+import '../styles/index.css'; // Tailwind CSS import
 import apiClient from '../services/api';
 
 const serviceOptions = {
@@ -142,124 +142,197 @@ const Booking = () => {
   };
 
   return (
-    <div className="booking-container">
-      <h2>Book Your Appointment</h2>
-      <div className="booking-box">
-        <form onSubmit={handleSubmit}>
-          <div className="form-section customer-details">
-            <h3>Personal Information</h3>
-            <div className="input-group">
-              <label htmlFor="name">Full Name<span className="required">*</span></label>
-              <input 
-                type="text" 
-                id="name" 
-                name="name" 
-                placeholder="Enter your name" 
-                required 
-                pattern="[A-Za-z ]+" 
-                title="Name should contain only letters and spaces." 
-              />
+    <div className="max-w-5xl mx-auto px-6 py-12 bg-gray-50">
+      <h2 className="text-4xl font-bold text-center text-sky-700 mb-8">Book Your Appointment</h2>
+      <div className="bg-white rounded-xl shadow-xl overflow-hidden">
+        <div className="bg-sky-50 p-6 border-b border-sky-100">
+          <div className="flex items-center space-x-3">
+            <div className="bg-sky-700 rounded-full p-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
             </div>
-            
-            <div className="input-group">
-              <label htmlFor="phone">Phone Number<span className="required">*</span></label>
-              <input 
-                type="tel" 
-                id="phone" 
-                name="phone" 
-                placeholder="Enter 11-digit phone number" 
-                required 
-                pattern="^[0-9]{11}$" 
-                title="Phone number must be exactly 11 digits." 
-              />
-            </div>
-            
-            <div className="input-group">
-              <label htmlFor="email">Email Address</label>
-              <input 
-                type="email" 
-                id="email" 
-                name="email" 
-                placeholder="Enter your email (optional)" 
-              />
-            </div>
+            <h3 className="text-xl font-semibold text-sky-800">Schedule your service</h3>
           </div>
+        </div>
 
-          <div className="form-section address-section">
-            <h3>Service Location</h3>
-            <div className="input-group">
-              <label htmlFor="completeAddress">Complete Address<span className="required">*</span></label>
-              <input 
-                type="text" 
-                id="completeAddress" 
-                name="completeAddress" 
-                placeholder="Enter your complete address" 
-                required 
-              />
-            </div>
-          </div>
-
-          <div className="form-section service-section">
-            <h3>Service Selection</h3>
-            <p className="section-hint">Select one or more services that you need</p>
-            <div className="service-options">
-              {Object.entries(serviceOptions).map(([key, label]) => (
-                <label key={key} className="checkbox-container">
-                  <input 
-                    type="checkbox" 
-                    value={key} 
-                    checked={selectedServices.includes(key)} 
-                    onChange={handleServiceChange} 
-                  />
-                  <span className="checkbox-label">{label}</span>
-                </label>
-              ))}
-            </div>
-            
-            {selectedServices.length > 0 && (
-              <div className="service-configuration">
-                {selectedServices.map(service => (
-                  <div key={service} className="service-config-box">
-                    <h4>{serviceOptions[service]} Service Details</h4>
-                    
-                    <div className="date-picker-group">
-                      <label>Date for {serviceOptions[service]}<span className="required">*</span></label>
-                      <DatePicker
-                        selected={serviceDates[service]}
-                        onChange={(date) => handleServiceDateChange(service, date)}
-                        minDate={new Date()}
-                        filterDate={isDateGloballyAvailable}
-                        placeholderText="Select available date"
-                        required
-                        dateFormat="yyyy-MM-dd"
-                        calendarClassName="custom-calendar"
-                        className="date-input"
-                      />
+        <form onSubmit={handleSubmit} className="p-6">
+          <div className="space-y-8">
+            {/* Service Selection First */}
+            <div>
+              <h3 className="text-xl font-semibold text-sky-700 mb-3 flex items-center">
+                <span className="bg-sky-100 text-sky-700 rounded-full w-7 h-7 inline-flex items-center justify-center mr-2">1</span>
+                Service Selection
+              </h3>
+              <p className="text-gray-600 mb-4">Select one or more services that you need</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.entries(serviceOptions).map(([key, label]) => (
+                  <label 
+                    key={key} 
+                    className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all
+                      ${selectedServices.includes(key) 
+                          ? 'border-sky-500 bg-sky-50 shadow-sm' 
+                          : 'border-gray-200 hover:border-sky-200'}`}
+                  >
+                    <input 
+                      type="checkbox" 
+                      value={key} 
+                      checked={selectedServices.includes(key)} 
+                      onChange={handleServiceChange}
+                      className="w-5 h-5 text-sky-600 rounded focus:ring-sky-500" 
+                    />
+                    <div className="ml-3">
+                      <span className="font-medium text-gray-800">{label}</span>
                     </div>
-                    
-                    <div className="ac-type-group">
-                      <label>AC Types for {serviceOptions[service]}<span className="required">*</span></label>
-                      <div className="ac-type-options">
-                        {acTypeOptions.map(acType => (
-                          <label key={`${service}-${acType}`} className="checkbox-container">
-                            <input 
-                              type="checkbox" 
-                              checked={serviceAcTypes[service]?.includes(acType) || false}
-                              onChange={() => handleACTypeChange(service, acType)} 
-                            />
-                            <span className="checkbox-label">{acType}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+                  </label>
                 ))}
               </div>
-            )}
-          </div>
+              
+              {selectedServices.length > 0 && (
+                <div className="mt-8 space-y-8">
+                  {selectedServices.map(service => (
+                    <div key={service} className="bg-white p-5 rounded-lg border border-sky-100 shadow-sm">
+                      <h4 className="text-lg font-medium text-sky-700 mb-4 pb-2 border-b border-sky-50">{serviceOptions[service]} Service Details</h4>
+                      
+                      <div className="mb-5">
+                        <label className="block text-gray-700 font-medium mb-2">
+                          Date for {serviceOptions[service]}<span className="text-red-500 ml-1">*</span>
+                        </label>
+                        <DatePicker
+                          selected={serviceDates[service]}
+                          onChange={(date) => handleServiceDateChange(service, date)}
+                          minDate={new Date()}
+                          filterDate={isDateGloballyAvailable}
+                          placeholderText="Select available date"
+                          required
+                          dateFormat="yyyy-MM-dd"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-gray-700 font-medium mb-2">
+                          AC Types for {serviceOptions[service]}<span className="text-red-500 ml-1">*</span>
+                        </label>
+                        <div className="flex flex-wrap gap-3">
+                          {acTypeOptions.map(acType => (
+                            <label 
+                              key={`${service}-${acType}`} 
+                              className={`flex items-center px-4 py-2 border-2 rounded-lg cursor-pointer transition-all
+                                ${serviceAcTypes[service]?.includes(acType) 
+                                    ? 'border-sky-500 bg-sky-50 shadow-sm' 
+                                    : 'border-gray-200 hover:border-sky-200'}`}
+                            >
+                              <input 
+                                type="checkbox" 
+                                checked={serviceAcTypes[service]?.includes(acType) || false}
+                                onChange={() => handleACTypeChange(service, acType)}
+                                className="w-4 h-4 text-sky-600 rounded focus:ring-sky-500" 
+                              />
+                              <span className="ml-2 font-medium text-gray-800">{acType}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
-          <div className="form-submit">
-            <button type="submit">Schedule Appointment</button>
+            {/* Personal Information Next */}
+            {selectedServices.length > 0 && (
+              <div>
+                <h3 className="text-xl font-semibold text-sky-700 mb-3 flex items-center">
+                  <span className="bg-sky-100 text-sky-700 rounded-full w-7 h-7 inline-flex items-center justify-center mr-2">2</span>
+                  Personal Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                  <div>
+                    <label htmlFor="name" className="block text-gray-700 font-medium mb-2">
+                      Full Name<span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      id="name" 
+                      name="name" 
+                      placeholder="Enter your name" 
+                      required 
+                      pattern="[A-Za-z ]+" 
+                      title="Name should contain only letters and spaces."
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500" 
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="phone" className="block text-gray-700 font-medium mb-2">
+                      Phone Number<span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <input 
+                      type="tel" 
+                      id="phone" 
+                      name="phone" 
+                      placeholder="Enter 11-digit phone number" 
+                      required 
+                      pattern="^[0-9]{11}$" 
+                      title="Phone number must be exactly 11 digits."
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500" 
+                    />
+                  </div>
+                  
+                  <div className="md:col-span-2">
+                    <label htmlFor="email" className="block text-gray-700 font-medium mb-2">
+                      Email Address
+                    </label>
+                    <input 
+                      type="email" 
+                      id="email" 
+                      name="email" 
+                      placeholder="Enter your email (optional)"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500" 
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Service Location Last */}
+            {selectedServices.length > 0 && (
+              <div>
+                <h3 className="text-xl font-semibold text-sky-700 mb-3 flex items-center">
+                  <span className="bg-sky-100 text-sky-700 rounded-full w-7 h-7 inline-flex items-center justify-center mr-2">3</span>
+                  Service Location
+                </h3>
+                <div className="mt-4">
+                  <label htmlFor="completeAddress" className="block text-gray-700 font-medium mb-2">
+                    Complete Address<span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <textarea 
+                    id="completeAddress" 
+                    name="completeAddress" 
+                    placeholder="Enter your complete address" 
+                    required
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 h-24" 
+                  ></textarea>
+                </div>
+              </div>
+            )}
+
+            {/* Submit Button */}
+            {selectedServices.length > 0 && (
+              <div className="mt-8 pt-6 border-t border-gray-100">
+                <button 
+                  type="submit"
+                  className="w-full md:w-auto bg-sky-600 hover:bg-sky-700 text-white font-medium py-3 px-8 rounded-lg transition-colors focus:outline-none focus:ring-4 focus:ring-sky-300 shadow-md hover:shadow-lg flex items-center justify-center mx-auto"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Schedule Appointment
+                </button>
+              </div>
+            )}
           </div>
         </form>
       </div>  
