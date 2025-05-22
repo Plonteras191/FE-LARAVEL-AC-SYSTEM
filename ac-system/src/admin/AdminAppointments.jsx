@@ -11,6 +11,7 @@ const AdminAppointments = () => {
   const [acceptedAppointments, setAcceptedAppointments] = useState([]);
   const [rescheduleInputs, setRescheduleInputs] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [availableTechnicians, setAvailableTechnicians] = useState([]);
   
   // Modal states
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -18,6 +19,10 @@ const AdminAppointments = () => {
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
   const [modalType, setModalType] = useState('');
+  
+  // Technician assignment states
+  const [selectedTechnicians, setSelectedTechnicians] = useState([]);
+  const [customTechnicianInput, setCustomTechnicianInput] = useState('');
   
   // Tab and pagination states
   const [activeTab, setActiveTab] = useState('pending');
@@ -27,8 +32,9 @@ const AdminAppointments = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch all appointments from Laravel backend
+    // Fetch all appointments and technicians from Laravel backend
     fetchAppointments();
+    fetchTechnicians();
   }, []);
 
   const fetchAppointments = () => {
@@ -57,6 +63,15 @@ const AdminAppointments = () => {
       });
   };
 
+  const fetchTechnicians = async () => {
+    try {
+      const response = await appointmentsApi.getTechnicians();
+      setAvailableTechnicians(response.data);
+    } catch (error) {
+      console.error("Error fetching technicians:", error);
+    }
+  };
+
   // Delete (reject) appointment
   const handleCancelAppointment = async (id) => {
     try {
@@ -83,6 +98,8 @@ const AdminAppointments = () => {
   const openAcceptModal = (id) => {
     setSelectedAppointmentId(id);
     setModalType('accept');
+    setSelectedTechnicians([]);
+    setCustomTechnicianInput('');
     setIsAcceptModalOpen(true);
   };
 
@@ -107,6 +124,39 @@ const AdminAppointments = () => {
     setIsCompleteModalOpen(false);
     setSelectedAppointmentId(null);
     setModalType('');
+    setSelectedTechnicians([]);
+    setCustomTechnicianInput('');
+  };
+
+  // Handle technician selection from dropdown
+  const handleTechnicianSelect = (e) => {
+    const technicianName = e.target.value;
+    if (technicianName && !selectedTechnicians.includes(technicianName)) {
+      setSelectedTechnicians(prev => [...prev, technicianName]);
+    }
+    e.target.value = ''; // Reset dropdown
+  };
+
+  // Remove selected technician
+  const removeTechnician = (technicianName) => {
+    setSelectedTechnicians(prev => prev.filter(name => name !== technicianName));
+  };
+
+  // Add custom technician
+  const addCustomTechnician = () => {
+    const name = customTechnicianInput.trim();
+    if (name && !selectedTechnicians.includes(name)) {
+      setSelectedTechnicians(prev => [...prev, name]);
+      setCustomTechnicianInput('');
+    }
+  };
+
+  // Handle Enter key for custom technician input
+  const handleCustomTechnicianKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addCustomTechnician();
+    }
   };
 
   // Toggle inline reschedule input for a given appointment service
@@ -174,7 +224,10 @@ const AdminAppointments = () => {
   const handleAcceptAppointment = async (id) => {
     try {
       setIsLoading(true);
-      const response = await appointmentsApi.accept(id);
+      const payload = {
+        technician_names: selectedTechnicians
+      };
+      const response = await appointmentsApi.accept(id, payload);
       if (
         response.data &&
         response.data.status &&
@@ -195,6 +248,8 @@ const AdminAppointments = () => {
       setIsLoading(false);
       setIsAcceptModalOpen(false);
       setSelectedAppointmentId(null);
+      setSelectedTechnicians([]);
+      setCustomTechnicianInput('');
     }
   };
 
@@ -463,6 +518,7 @@ const AdminAppointments = () => {
                     <th>Email</th>
                     <th>Service(s)</th>
                     <th>AC Type(s)</th>
+                    <th>Technician(s)</th>
                     <th>Address</th>
                     <th>Action</th>
                   </tr>
@@ -483,6 +539,11 @@ const AdminAppointments = () => {
                         {appointment.services 
                           ? parseAcTypes(appointment.services)
                           : 'N/A'}
+                      </td>
+                      <td>
+                        {appointment.technicians && appointment.technicians.length > 0
+                          ? appointment.technicians.join(', ')
+                          : 'Not assigned'}
                       </td>
                       <td>{appointment.complete_address}</td>
                       <td>
@@ -549,15 +610,97 @@ const AdminAppointments = () => {
           actionType="reject"
         />
 
-        {/* Accept Modal */}
-        <Modal
-          isOpen={isAcceptModalOpen}
-          title="Confirm Acceptance"
-          message="Are you sure you want to accept this appointment? A confirmation email will be sent to the customer."
-          onConfirm={() => handleAcceptAppointment(selectedAppointmentId)}
-          onCancel={handleCancelModal}
-          actionType="accept"
-        />
+        {/* Accept Modal with Technician Assignment */}
+        {isAcceptModalOpen && (
+          <div className="modal-overlay">
+            <div className="modal-content accept-modal">
+              <h3>Accept Appointment</h3>
+              <p>Are you sure you want to accept this appointment? A confirmation email will be sent to the customer.</p>
+              
+              <div className="technician-assignment-section">
+                <h4>Assign Technicians (Optional)</h4>
+                
+                {/* Dropdown for existing technicians */}
+                <div className="technician-dropdown">
+                  <label htmlFor="technician-select">Select from existing technicians:</label>
+                  <select 
+                    id="technician-select"
+                    onChange={handleTechnicianSelect}
+                    defaultValue=""
+                  >
+                    <option value="">-- Select a technician --</option>
+                    {availableTechnicians.map(tech => (
+                      <option key={tech.id} value={tech.name}>
+                        {tech.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Custom technician input */}
+                <div className="custom-technician-input">
+                  <label htmlFor="custom-technician">Add new technician:</label>
+                  <div className="input-group">
+                    <input
+                      id="custom-technician"
+                      type="text"
+                      value={customTechnicianInput}
+                      onChange={(e) => setCustomTechnicianInput(e.target.value)}
+                      onKeyPress={handleCustomTechnicianKeyPress}
+                      placeholder="Enter technician name"
+                    />
+                    <button 
+                      type="button"
+                      onClick={addCustomTechnician}
+                      disabled={!customTechnicianInput.trim()}
+                      className="add-technician-button"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+
+                {/* Selected technicians display */}
+                {selectedTechnicians.length > 0 && (
+                  <div className="selected-technicians">
+                    <h5>Selected Technicians:</h5>
+                    <div className="technician-tags">
+                      {selectedTechnicians.map((name, index) => (
+                        <span key={index} className="technician-tag">
+                          {name}
+                          <button 
+                            type="button"
+                            onClick={() => removeTechnician(name)}
+                            className="remove-technician"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="modal-actions">
+                <button 
+                  className="modal-confirm-button"
+                  onClick={() => handleAcceptAppointment(selectedAppointmentId)}
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Processing...' : 'Accept Appointment'}
+                </button>
+                <button 
+                  className="modal-cancel-button"
+                  onClick={handleCancelModal}
+                  disabled={isLoading}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Complete Modal */}
         <Modal

@@ -8,7 +8,9 @@ import {
   FaMoneyBillWave,
   FaDownload,
   FaFileExcel,
-  FaFileCsv
+  FaFileCsv,
+  FaAngleLeft,
+  FaAngleRight
 } from 'react-icons/fa';
 import '../styles/AdminReports.css';
 import * as XLSX from 'xlsx';
@@ -22,6 +24,15 @@ const AdminReports = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedDate, setSelectedDate] = useState('');
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState({
+    completed: 1,
+    pending: 1,
+    rejected: 1,
+    revenue: 1
+  });
+  const itemsPerPage = 6;
 
   useEffect(() => {
     setIsLoading(true);
@@ -66,6 +77,16 @@ const AdminReports = () => {
       });
   }, []);
 
+  // Reset pagination when tab changes
+  useEffect(() => {
+    setCurrentPage({
+      completed: 1,
+      pending: 1,
+      rejected: 1,
+      revenue: 1
+    });
+  }, [activeTab]);
+
   // Filter revenue history when date changes
   useEffect(() => {
     if (!selectedDate) {
@@ -82,6 +103,8 @@ const AdminReports = () => {
     });
 
     setFilteredRevenueHistory(filtered);
+    // Reset revenue pagination when filter changes
+    setCurrentPage(prev => ({ ...prev, revenue: 1 }));
   }, [selectedDate, revenueHistory]);
 
   // Filter appointments based on status
@@ -100,6 +123,22 @@ const AdminReports = () => {
   const rejectedAppointments = appointments.filter(appt => 
     appt.status && appt.status.toLowerCase() === 'rejected'
   );
+
+  // Get paginated data
+  const getPaginatedData = (data, page) => {
+    const startIndex = (page - 1) * itemsPerPage;
+    return data.slice(startIndex, startIndex + itemsPerPage);
+  };
+
+  // Get total pages
+  const getTotalPages = (totalItems) => {
+    return Math.ceil(totalItems / itemsPerPage);
+  };
+
+  // Handle page change
+  const handlePageChange = (section, newPage) => {
+    setCurrentPage(prev => ({ ...prev, [section]: newPage }));
+  };
 
   // Calculate total filtered revenue
   const filteredTotalRevenue = filteredRevenueHistory.reduce(
@@ -154,6 +193,45 @@ const AdminReports = () => {
   // Clear date filter
   const clearDateFilter = () => {
     setSelectedDate('');
+  };
+
+  // Pagination component
+  const Pagination = ({ currentPage, totalPages, onPageChange, section }) => {
+    return (
+      <div className="pagination-controls">
+        <button 
+          onClick={() => onPageChange(section, 1)} 
+          disabled={currentPage === 1}
+          className="pagination-button"
+        >
+          First
+        </button>
+        <button 
+          onClick={() => onPageChange(section, currentPage - 1)} 
+          disabled={currentPage === 1}
+          className="pagination-button"
+        >
+          <FaAngleLeft />
+        </button>
+        <span className="pagination-info">
+          Page {currentPage} of {totalPages}
+        </span>
+        <button 
+          onClick={() => onPageChange(section, currentPage + 1)} 
+          disabled={currentPage === totalPages}
+          className="pagination-button"
+        >
+          <FaAngleRight />
+        </button>
+        <button 
+          onClick={() => onPageChange(section, totalPages)} 
+          disabled={currentPage === totalPages}
+          className="pagination-button"
+        >
+          Last
+        </button>
+      </div>
+    );
   };
 
   // Export data to CSV
@@ -302,6 +380,27 @@ const AdminReports = () => {
       exportToExcel(data, filename);
     }
   };
+
+  // Get paginated data for each section
+  const paginatedCompletedAppointments = getPaginatedData(
+    completeAppointments, 
+    currentPage.completed
+  );
+  
+  const paginatedPendingAppointments = getPaginatedData(
+    [...pendingAppointments, ...acceptedAppointments], 
+    currentPage.pending
+  );
+  
+  const paginatedRejectedAppointments = getPaginatedData(
+    rejectedAppointments, 
+    currentPage.rejected
+  );
+  
+  const paginatedRevenueHistory = getPaginatedData(
+    filteredRevenueHistory, 
+    currentPage.revenue
+  );
 
   if (isLoading) {
     return (
@@ -534,41 +633,53 @@ const AdminReports = () => {
           <div className="full-width-section">
             <h3><FaCheckCircle className="report-icon" /> All Completed Appointments</h3>
             {completeAppointments.length > 0 ? (
-              <div className="appointment-list">
-                {completeAppointments.map(app => {
-                  const services = parseServices(app.services);
-                  return (
-                    <div key={app.id} className="appointment-card">
-                      <div className="appointment-card-header">
-                        <span className="appointment-id">#{app.id}</span>
-                        <span className="status-badge completed">Completed</span>
-                      </div>
-                      <div className="appointment-card-body">
-                        <h4>{app.name}</h4>
-                        <p><strong>Contact:</strong> {app.phone} | {app.email || 'N/A'}</p>
-                        <p><strong>Address:</strong> {app.complete_address}</p>
-                        <div className="services-list">
-                          <p><strong>Services:</strong></p>
-                          {services.length > 0 ? (
-                            <ul>
-                              {services.map((service, idx) => (
-                                <li key={idx}>
-                                  {service.type} on {new Date(service.date).toLocaleDateString()} 
-                                  {service.ac_types && service.ac_types.length > 0 && (
-                                    <span> | AC Types: {service.ac_types.join(', ')}</span>
-                                  )}
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p>No service details available</p>
-                          )}
+              <>
+                <div className="appointment-list">
+                  {paginatedCompletedAppointments.map(app => {
+                    const services = parseServices(app.services);
+                    return (
+                      <div key={app.id} className="appointment-card">
+                        <div className="appointment-card-header">
+                          <span className="appointment-id">#{app.id}</span>
+                          <span className="status-badge completed">Completed</span>
+                        </div>
+                        <div className="appointment-card-body">
+                          <h4>{app.name}</h4>
+                          <p><strong>Contact:</strong> {app.phone} | {app.email || 'N/A'}</p>
+                          <p><strong>Address:</strong> {app.complete_address}</p>
+                          <div className="services-list">
+                            <p><strong>Services:</strong></p>
+                            {services.length > 0 ? (
+                              <ul>
+                                {services.map((service, idx) => (
+                                  <li key={idx}>
+                                    {service.type} on {new Date(service.date).toLocaleDateString()} 
+                                    {service.ac_types && service.ac_types.length > 0 && (
+                                      <span> | AC Types: {service.ac_types.join(', ')}</span>
+                                    )}
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p>No service details available</p>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+                
+                {/* Pagination controls */}
+                {getTotalPages(completeAppointments.length) > 1 && (
+                  <Pagination 
+                    currentPage={currentPage.completed}
+                    totalPages={getTotalPages(completeAppointments.length)}
+                    onPageChange={handlePageChange}
+                    section="completed"
+                  />
+                )}
+              </>
             ) : (
               <div className="empty-state">No completed appointments found.</div>
             )}
@@ -579,43 +690,55 @@ const AdminReports = () => {
           <div className="full-width-section">
             <h3><FaClock className="report-icon" /> All Active Appointments</h3>
             {pendingAppointments.length + acceptedAppointments.length > 0 ? (
-              <div className="appointment-list">
-                {[...pendingAppointments, ...acceptedAppointments].map(app => {
-                  const services = parseServices(app.services);
-                  return (
-                    <div key={app.id} className="appointment-card">
-                      <div className="appointment-card-header">
-                        <span className="appointment-id">#{app.id}</span>
-                        <span className={`status-badge ${app.status?.toLowerCase() || 'pending'}`}>
-                          {app.status || 'Pending'}
-                        </span>
-                      </div>
-                      <div className="appointment-card-body">
-                        <h4>{app.name}</h4>
-                        <p><strong>Contact:</strong> {app.phone} | {app.email || 'N/A'}</p>
-                        <p><strong>Address:</strong> {app.complete_address}</p>
-                        <div className="services-list">
-                          <p><strong>Services:</strong></p>
-                          {services.length > 0 ? (
-                            <ul>
-                              {services.map((service, idx) => (
-                                <li key={idx}>
-                                  {service.type} on {new Date(service.date).toLocaleDateString()} 
-                                  {service.ac_types && service.ac_types.length > 0 && (
-                                    <span> | AC Types: {service.ac_types.join(', ')}</span>
-                                  )}
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p>No service details available</p>
-                          )}
+              <>
+                <div className="appointment-list">
+                  {paginatedPendingAppointments.map(app => {
+                    const services = parseServices(app.services);
+                    return (
+                      <div key={app.id} className="appointment-card">
+                        <div className="appointment-card-header">
+                          <span className="appointment-id">#{app.id}</span>
+                          <span className={`status-badge ${app.status?.toLowerCase() || 'pending'}`}>
+                            {app.status || 'Pending'}
+                          </span>
+                        </div>
+                        <div className="appointment-card-body">
+                          <h4>{app.name}</h4>
+                          <p><strong>Contact:</strong> {app.phone} | {app.email || 'N/A'}</p>
+                          <p><strong>Address:</strong> {app.complete_address}</p>
+                          <div className="services-list">
+                            <p><strong>Services:</strong></p>
+                            {services.length > 0 ? (
+                              <ul>
+                                {services.map((service, idx) => (
+                                  <li key={idx}>
+                                    {service.type} on {new Date(service.date).toLocaleDateString()} 
+                                    {service.ac_types && service.ac_types.length > 0 && (
+                                      <span> | AC Types: {service.ac_types.join(', ')}</span>
+                                    )}
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p>No service details available</p>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+                
+                {/* Pagination controls */}
+                {getTotalPages(pendingAppointments.length + acceptedAppointments.length) > 1 && (
+                  <Pagination 
+                    currentPage={currentPage.pending}
+                    totalPages={getTotalPages(pendingAppointments.length + acceptedAppointments.length)}
+                    onPageChange={handlePageChange}
+                    section="pending"
+                  />
+                )}
+              </>
             ) : (
               <div className="empty-state">No active appointments found.</div>
             )}
@@ -626,126 +749,148 @@ const AdminReports = () => {
           <div className="full-width-section">
             <h3><FaBan className="report-icon" /> All Rejected Appointments</h3>
             {rejectedAppointments.length > 0 ? (
-              <div className="appointment-list">
-                {rejectedAppointments.map(app => {
-                  const services = parseServices(app.services);
-                  return (
-                    <div key={app.id} className="appointment-card">
-                      <div className="appointment-card-header">
-                        <span className="appointment-id">#{app.id}</span>
-                        <span className="status-badge rejected">Rejected</span>
-                      </div>
-                      <div className="appointment-card-body">
-                        <h4>{app.name}</h4>
-                        <p><strong>Contact:</strong> {app.phone} | {app.email || 'N/A'}</p>
-                        <p><strong>Address:</strong> {app.complete_address}</p>
-                        <div className="services-list">
-                          <p><strong>Services:</strong></p>
-                          {services.length > 0 ? (
-                            <ul>
-                              {services.map((service, idx) => (
-                                <li key={idx}>
-                                  {service.type} on {new Date(service.date).toLocaleDateString()} 
-                                  {service.ac_types && service.ac_types.length > 0 && (
-                                    <span> | AC Types: {service.ac_types.join(', ')}</span>
-                                  )}
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p>No service details available</p>
-                          )}
+              <>
+                <div className="appointment-list">
+                  {paginatedRejectedAppointments.map(app => {
+                    const services = parseServices(app.services);
+                    return (
+                      <div key={app.id} className="appointment-card">
+                        <div className="appointment-card-header">
+                          <span className="appointment-id">#{app.id}</span>
+                          <span className="status-badge rejected">Rejected</span>
+                        </div>
+                        <div className="appointment-card-body">
+                          <h4>{app.name}</h4>
+                          <p><strong>Contact:</strong> {app.phone} | {app.email || 'N/A'}</p>
+                          <p><strong>Address:</strong> {app.complete_address}</p>
+                          <div className="services-list">
+                            <p><strong>Services:</strong></p>
+                            {services.length > 0 ? (
+                              <ul>
+                                {services.map((service, idx) => (
+                                  <li key={idx}>
+                                    {service.type} on {new Date(service.date).toLocaleDateString()} 
+                                    {service.ac_types && service.ac_types.length > 0 && (
+                                      <span> | AC Types: {service.ac_types.join(', ')}</span>
+                                    )}
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p>No service details available</p>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+                
+                {/* Pagination controls */}
+                {getTotalPages(rejectedAppointments.length) > 1 && (
+                  <Pagination 
+                    currentPage={currentPage.rejected}
+                    totalPages={getTotalPages(rejectedAppointments.length)}
+                    onPageChange={handlePageChange}
+                    section="rejected"
+                  />
+                )}
+              </>
             ) : (
               <div className="empty-state">No rejected appointments found.</div>
             )}
           </div>
         )}
 
-        {activeTab === 'revenue' && (
-          <div className="revenue-history-container">
-            <div className="revenue-history-header">
-              <h3><FaMoneyBillWave className="report-icon" /> Revenue History</h3>
-              <p className="revenue-history-subtitle">
-                {selectedDate 
-                  ? `Viewing revenue for: ${new Date(selectedDate).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}`
-                  : 'View and track your historical revenue records'
-                }
-              </p>
+{activeTab === 'revenue' && (
+  <div className="revenue-history-container">
+    <div className="revenue-history-header">
+      <h3><FaMoneyBillWave className="report-icon" /> Revenue History</h3>
+      <p className="revenue-history-subtitle">
+        {selectedDate 
+          ? `Viewing revenue for: ${new Date(selectedDate).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}`
+          : 'View and track your historical revenue records'
+        }
+      </p>
+    </div>
+    
+    <div className="revenue-history-box">
+      {filteredRevenueHistory.length === 0 ? (
+        <div className="no-data-message">
+          <div className="empty-state-icon">📊</div>
+          <p>{selectedDate ? 'No revenue records found for the selected date.' : 'No revenue history available.'}</p>
+          {selectedDate && <button className="clear-filter-btn" onClick={clearDateFilter}>Clear Filter</button>}
+          {!selectedDate && <p className="empty-state-hint">Revenue records you save will appear here.</p>}
+        </div>
+      ) : (
+        <>
+          <div className="table-container">
+            <table className="revenue-history-table">
+              <thead>
+                <tr>
+                  <th>Date Recorded</th>
+                  <th>Service Type</th>
+                  <th>Booking ID</th>
+                  <th>Total Revenue</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedRevenueHistory.map((entry, index) => (
+                  <tr key={index}>
+                    <td className="date-column">{entry.revenue_date}</td>
+                    <td className="service-column">{entry.service_types || 'N/A'}</td>
+                    <td className="booking-column">{entry.booking_id || 'N/A'}</td>
+                    <td className="amount-column">{formatCurrency(entry.total_revenue)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colSpan="3" className="total-label">
+                    {selectedDate ? 'Selected Date Total' : 'All-time Total'}
+                  </td>
+                  <td className="total-value">{formatCurrency(filteredTotalRevenue)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          
+          <div className="history-summary">
+            <div className="summary-card">
+              <div className="summary-title">
+                {selectedDate ? 'Filtered Records' : 'Total Records'}
+              </div>
+              <div className="summary-value">{filteredRevenueHistory.length}</div>
             </div>
-            
-            <div className="revenue-history-box">
-              {filteredRevenueHistory.length === 0 ? (
-                <div className="no-data-message">
-                  <div className="empty-state-icon">📊</div>
-                  <p>{selectedDate ? 'No revenue records found for the selected date.' : 'No revenue history available.'}</p>
-                  {selectedDate && <button className="clear-filter-btn" onClick={clearDateFilter}>Clear Filter</button>}
-                  {!selectedDate && <p className="empty-state-hint">Revenue records you save will appear here.</p>}
-                </div>
-              ) : (
-                <>
-                  <div className="table-container">
-                    <table className="revenue-history-table">
-                      <thead>
-                        <tr>
-                          <th>Date Recorded</th>
-                          <th>Service Type</th>
-                          <th>Booking ID</th>
-                          <th>Total Revenue</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredRevenueHistory.map((entry, index) => (
-                          <tr key={index}>
-                            <td className="date-column">{entry.revenue_date}</td>
-                            <td className="service-column">{entry.service_types || 'N/A'}</td>
-                            <td className="booking-column">{entry.booking_id || 'N/A'}</td>
-                            <td className="amount-column">{formatCurrency(entry.total_revenue)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                      <tfoot>
-                        <tr>
-                          <td colSpan="3" className="total-label">
-                            {selectedDate ? 'Selected Date Total' : 'All-time Total'}
-                          </td>
-                          <td className="total-value">{formatCurrency(filteredTotalRevenue)}</td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                  
-                  <div className="history-summary">
-                    <div className="summary-card">
-                      <div className="summary-title">
-                        {selectedDate ? 'Filtered Records' : 'Total Records'}
-                      </div>
-                      <div className="summary-value">{filteredRevenueHistory.length}</div>
-                    </div>
-                    <div className="summary-card">
-                      <div className="summary-title">
-                        {selectedDate ? 'Filtered Revenue' : 'All-time Revenue'}
-                      </div>
-                      <div className="summary-value revenue-total">{formatCurrency(filteredTotalRevenue)}</div>
-                    </div>
-                  </div>
-                </>
-              )}
+            <div className="summary-card">
+              <div className="summary-title">
+                {selectedDate ? 'Filtered Revenue' : 'All-time Revenue'}
+              </div>
+              <div className="summary-value revenue-total">{formatCurrency(filteredTotalRevenue)}</div>
             </div>
           </div>
-        )}
-      </div>
+          
+          {/* Pagination controls for revenue */}
+          {getTotalPages(filteredRevenueHistory.length) > 1 && (
+            <Pagination 
+              currentPage={currentPage.revenue}
+              totalPages={getTotalPages(filteredRevenueHistory.length)}
+              onPageChange={handlePageChange}
+              section="revenue"
+            />
+          )}
+        </>
+      )}
     </div>
-  );
+  </div>
+)}
+</div>
+</div>
+);
 };
 
 export default AdminReports;

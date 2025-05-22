@@ -73,6 +73,8 @@
 /* Header styling */
 .revenue-header, .revenue-history-header {
   margin-bottom: 25px;
+  background-color: #f9fafb;
+
 }
 
 .revenue-header h2, .revenue-history-header h2 {

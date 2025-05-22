@@ -15,10 +15,11 @@ const apiClient = axios.create({
 // API endpoints functions
 export const appointmentsApi = {
   getAll: () => apiClient.get('/appointments'),
-  delete: (id, reason = '') => apiClient.delete(`/appointments/${id}`, { data: { reason } }), // Updated to support reason
-  accept: (id) => apiClient.post(`/appointments/${id}/accept`),
+  delete: (id, reason = '') => apiClient.delete(`/appointments/${id}`, { data: { reason } }),
+  accept: (id, payload) => apiClient.post(`/appointments/${id}/accept`, payload),
   complete: (id) => apiClient.post(`/appointments/${id}/complete`),
-  reschedule: (id, payload) => apiClient.put(`/appointments/${id}?action=reschedule`, payload)
+  reschedule: (id, payload) => apiClient.put(`/appointments/${id}/reschedule`, payload),
+  getTechnicians: () => apiClient.get('/appointments/technicians')
 };
 
 export default apiClient;

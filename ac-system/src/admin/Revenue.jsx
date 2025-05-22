@@ -10,9 +10,7 @@ const Revenue = () => {
   // Revenue management states
   const [appointments, setAppointments] = useState([]);
   const [revenueData, setRevenueData] = useState({});
-  const [discountData, setDiscountData] = useState({});
   const [totalRevenue, setTotalRevenue] = useState(0);
-  const [totalDiscount, setTotalDiscount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -38,10 +36,10 @@ const Revenue = () => {
     }
   }, [activeTab]);
 
-  // Auto-compute total whenever revenue or discount values change
+  // Auto-compute total whenever revenue values change
   useEffect(() => {
     computeTotalRevenue();
-  }, [revenueData, discountData]);
+  }, [revenueData]);
 
   // Load revenue history when history tab is active
   useEffect(() => {
@@ -72,61 +70,19 @@ const Revenue = () => {
     }
   };
 
-  const handleDiscountChange = (id, value) => {
-    // Prevent negative values and limit percentage to 100
-    const numValue = parseFloat(value);
-    if (value === '' || (numValue >= 0 && numValue <= 100)) {
-      setDiscountData(prev => ({
-        ...prev,
-        [id]: value,
-      }));
-    }
-  };
-
-  // Calculate discount amount from percentage
-  const calculateDiscountAmount = (revenue, discountPercent) => {
-    const numRevenue = parseFloat(revenue) || 0;
-    const numDiscount = parseFloat(discountPercent) || 0;
-    return (numRevenue * numDiscount) / 100;
-  };
-
-  // Compute net revenue (revenue - discount) for a specific appointment
-  const computeNetRevenue = (appointmentId) => {
-    const revenue = parseFloat(revenueData[appointmentId] || 0);
-    const discountPercent = parseFloat(discountData[appointmentId] || 0);
-    const discountAmount = calculateDiscountAmount(revenue, discountPercent);
-    
-    return isNaN(revenue) ? 0 : revenue - discountAmount;
-  };
-
-  // Get discount amount for display
-  const getDiscountAmount = (appointmentId) => {
-    const revenue = parseFloat(revenueData[appointmentId] || 0);
-    const discountPercent = parseFloat(discountData[appointmentId] || 0);
-    return calculateDiscountAmount(revenue, discountPercent);
-  };
-
   // Compute total revenue based on input values
   const computeTotalRevenue = () => {
     let totalRev = 0;
-    let totalDisc = 0;
 
     appointments.forEach(appt => {
       const revenue = parseFloat(revenueData[appt.id] || 0);
-      const discountPercent = parseFloat(discountData[appt.id] || 0);
       
       if (!isNaN(revenue)) {
         totalRev += revenue;
-        
-        if (!isNaN(discountPercent)) {
-          const discountAmount = calculateDiscountAmount(revenue, discountPercent);
-          totalDisc += discountAmount;
-        }
       }
     });
 
-    setTotalRevenue(totalRev - totalDisc);
-    setTotalDiscount(totalDisc);
+    setTotalRevenue(totalRev);
   };
 
   // Extract service info for each appointment
@@ -148,9 +104,7 @@ const Revenue = () => {
     // Reset component state after closing modal
     setAppointments([]);
     setRevenueData({});
-    setDiscountData({});
     setTotalRevenue(0);
-    setTotalDiscount(0);
     setSaveSuccess(false);
     // Switch to history tab to see the newly added record
     setActiveTab('history');
@@ -176,32 +130,24 @@ const Revenue = () => {
     // Create an array of appointment IDs for the revenue record
     const appointmentIds = appointments.map(appt => appt.id);
 
-    // Create appointment details with service information
+    // Create appointment details with revenue information
     const appointmentDetails = appointments.map(appt => {
-      const grossRevenue = parseFloat(revenueData[appt.id] || 0);
-      const discountPercent = parseFloat(discountData[appt.id] || 0);
-      const discountAmount = getDiscountAmount(appt.id);
-      const netRevenue = computeNetRevenue(appt.id);
+      const revenue = parseFloat(revenueData[appt.id] || 0);
       const services = getAppointmentServices(appt);
       
       return {
         id: appt.id,
-        gross_revenue: grossRevenue,
-        discount_percent: discountPercent,
-        discount_amount: discountAmount,
-        net_revenue: netRevenue,
+        net_revenue: revenue, // This aligns with your controller's expected structure
         service_types: services
       };
     });
 
-    // Create a new revenue record with discount information
+    // Create a new revenue record
     const revenueRecord = {
       revenue_date: new Date().toISOString().slice(0, 10), // Format: 'YYYY-MM-DD'
-      total_revenue: totalRevenue, // Net revenue (after discounts)
-      total_discount: totalDiscount,
+      total_revenue: totalRevenue,
       appointments: appointmentIds,
-      appointment_details: appointmentDetails,
-      service_types: appointmentDetails.map(d => d.service_types).flat()
+      appointment_details: appointmentDetails
     };
 
     // For debugging - log the data being sent
@@ -375,16 +321,13 @@ const Revenue = () => {
                     <th>Service</th>
                     <th>Date</th>
                     <th>Revenue (Php)</th>
-                    <th>Discount (%)</th>
-                    <th>Discount Amount</th>
-                    <th>Net Amount</th>
                   </tr>
                 </thead>
                 <tbody>
                   {appointments.map(appt => {
                     const { service, date } = getServiceInfo(appt.services);
-                    const netRevenue = computeNetRevenue(appt.id);
-                    const discountAmount = getDiscountAmount(appt.id);
+                    const revenue = parseFloat(revenueData[appt.id] || 0);
+                    
                     return (
                       <tr key={appt.id}>
                         <td className="id-column">{appt.id}</td>
@@ -403,26 +346,6 @@ const Revenue = () => {
                               onChange={(e) => handleRevenueChange(appt.id, e.target.value)}
                             />
                           </div>
-                        </td>
-                        <td className="discount-input-column">
-                          <div className="discount-input-wrapper">
-                            <input
-                              type="number"
-                              min="0"
-                              max="100"
-                              step="0.1"
-                              placeholder="0"
-                              value={discountData[appt.id] || ''}
-                              onChange={(e) => handleDiscountChange(appt.id, e.target.value)}
-                            />
-                            <span className="percent-symbol">%</span>
-                          </div>
-                        </td>
-                        <td className="discount-amount-column">
-                          <div className="discount-amount">₱ {discountAmount.toFixed(2)}</div>
-                        </td>
-                        <td className="net-amount-column">
-                          <div className="net-amount">₱ {netRevenue.toFixed(2)}</div>
                         </td>
                       </tr>
                     );
@@ -444,11 +367,7 @@ const Revenue = () => {
               </div>
               <div className="summary-details">
                 <div className="summary-item">
-                  <h3>Total Discount:</h3>
-                  <div className="total-discount">₱ {totalDiscount.toFixed(2)}</div>
-                </div>
-                <div className="summary-item">
-                  <h3>Net Revenue:</h3>
+                  <h3>Total Revenue:</h3>
                   <div className="total-amount">₱ {totalRevenue.toFixed(2)}</div>
                 </div>
               </div>
@@ -480,6 +399,7 @@ const Revenue = () => {
                 <thead>
                   <tr>
                     <th>Date Recorded</th>
+                    <th>Customer Name</th>
                     <th>Service Type</th>
                     <th>Booking ID</th>
                     <th>Total Revenue</th>
@@ -487,8 +407,9 @@ const Revenue = () => {
                 </thead>
                 <tbody>
                   {getCurrentPageItems().map((entry, index) => (
-                    <tr key={index}>
+                    <tr key={`${entry.revenue_id || entry.booking_id || index}`}>
                       <td className="date-column">{entry.revenue_date}</td>
+                      <td className="customer-column">{entry.customer_name || 'N/A'}</td>
                       <td className="service-column">{entry.service_types || 'N/A'}</td>
                       <td className="booking-column">{entry.booking_id || 'N/A'}</td>
                       <td className="amount-column">{formatCurrency(entry.total_revenue)}</td>
@@ -497,7 +418,7 @@ const Revenue = () => {
                 </tbody>
                 <tfoot>
                   <tr>
-                    <td colSpan="3" className="total-label">All-time Total</td>
+                    <td colSpan="4" className="total-label">All-time Total</td>
                     <td className="total-value">{formatCurrency(totalAmount)}</td>
                   </tr>
                 </tfoot>
@@ -569,7 +490,6 @@ const Revenue = () => {
           <h3>Revenue Record Saved Successfully!</h3>
           <p>Your revenue record has been successfully saved to the system.</p>
           <p>Total Revenue: ₱ {totalRevenue.toFixed(2)}</p>
-          <p>Total Discount: ₱ {totalDiscount.toFixed(2)}</p>
           <div className="modal-actions">
             <button className="modal-button modal-confirm-button" onClick={closeSuccessModal}>
               OK

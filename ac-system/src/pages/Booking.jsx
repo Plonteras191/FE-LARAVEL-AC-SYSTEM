@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 import { parseISO, format } from 'date-fns';
 import "react-datepicker/dist/react-datepicker.css";
-import '../styles/index.css'; // Tailwind CSS import
+import '../styles/index.css';
 import apiClient from '../services/api';
 
 const serviceOptions = {
@@ -23,10 +23,11 @@ const Booking = () => {
   const [serviceDates, setServiceDates] = useState({});
   const [serviceAcTypes, setServiceAcTypes] = useState({});
   const [globalAvailableDates, setGlobalAvailableDates] = useState([]);
+  const [errors, setErrors] = useState({});
+  const [formError, setFormError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch available dates from Laravel backend using the apiClient
     apiClient.get('/getAvailableDates', {
       params: { 
         global: 1, 
@@ -66,13 +67,11 @@ const Booking = () => {
     setServiceAcTypes(prev => {
       const currentTypes = prev[service] || [];
       if (currentTypes.includes(acType)) {
-        // Remove the AC type if it's already selected
         return {
           ...prev,
           [service]: currentTypes.filter(type => type !== acType)
         };
       } else {
-        // Add the AC type if it's not already selected
         return {
           ...prev,
           [service]: [...currentTypes, acType]
@@ -94,22 +93,36 @@ const Booking = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setFormError(''); // Clear previous form-level errors
 
-    // Validation
+    let newErrors = { services: {} };
+    let hasErrors = false;
+
     for (const service of selectedServices) {
-      const selectedDate = serviceDates[service];
-      if (!selectedDate) {
-        alert(`Please select a date for ${serviceOptions[service]}.`);
-        return;
+      const serviceErrors = {};
+
+      if (!serviceDates[service]) {
+        serviceErrors.date = `Please select a date for ${serviceOptions[service]}.`;
+        hasErrors = true;
+      } else if (!isDateGloballyAvailable(serviceDates[service])) {
+        serviceErrors.date = `The selected date for ${serviceOptions[service]} is no longer available. Please select another date.`;
+        hasErrors = true;
       }
-      if (!isDateGloballyAvailable(selectedDate)) {
-        alert(`The selected date for ${serviceOptions[service]} is no longer available. Please select another date.`);
-        return;
-      }
+
       if (!serviceAcTypes[service] || serviceAcTypes[service].length === 0) {
-        alert(`Please select at least one AC type for ${serviceOptions[service]}.`);
-        return;
+        serviceErrors.acTypes = `Please select at least one AC type for ${serviceOptions[service]}.`;
+        hasErrors = true;
       }
+
+      if (Object.keys(serviceErrors).length > 0) {
+        newErrors.services[service] = serviceErrors;
+      }
+    }
+
+    setErrors(newErrors);
+
+    if (hasErrors) {
+      return;
     }
 
     const formData = new FormData(e.target);
@@ -125,19 +138,18 @@ const Booking = () => {
       }))
     };
 
-    // Send booking data to Laravel backend using the apiClient
     apiClient.post('/booking', bookingData)
       .then(response => {
         console.log("Response from backend:", response.data);
         if (response.data.bookingId) {
           navigate('/confirmation', { state: bookingData });
         } else {
-          alert("Error saving booking: " + response.data.message);
+          setFormError("Error saving booking: " + response.data.message);
         }
       })
       .catch(error => {
         console.error("Error saving booking:", error);
-        alert("Error saving booking. Please try again later.");
+        setFormError("Error saving booking. Please try again later.");
       });
   };
 
@@ -157,8 +169,12 @@ const Booking = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6">
+          {formError && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+              <span className="block sm:inline">{formError}</span>
+            </div>
+          )}
           <div className="space-y-8">
-            {/* Service Selection First */}
             <div>
               <h3 className="text-xl font-semibold text-sky-700 mb-3 flex items-center">
                 <span className="bg-sky-100 text-sky-700 rounded-full w-7 h-7 inline-flex items-center justify-center mr-2">1</span>
@@ -209,6 +225,9 @@ const Booking = () => {
                           dateFormat="yyyy-MM-dd"
                           className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
                         />
+                        {errors.services?.[service]?.date && (
+                          <p className="text-red-500 text-sm mt-1">{errors.services[service].date}</p>
+                        )}
                       </div>
                       
                       <div>
@@ -234,6 +253,9 @@ const Booking = () => {
                             </label>
                           ))}
                         </div>
+                        {errors.services?.[service]?.acTypes && (
+                          <p className="text-red-500 text-sm mt-2">{errors.services[service].acTypes}</p>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -241,7 +263,6 @@ const Booking = () => {
               )}
             </div>
 
-            {/* Personal Information Next */}
             {selectedServices.length > 0 && (
               <div>
                 <h3 className="text-xl font-semibold text-sky-700 mb-3 flex items-center">
@@ -297,7 +318,6 @@ const Booking = () => {
               </div>
             )}
 
-            {/* Service Location Last */}
             {selectedServices.length > 0 && (
               <div>
                 <h3 className="text-xl font-semibold text-sky-700 mb-3 flex items-center">
@@ -319,7 +339,6 @@ const Booking = () => {
               </div>
             )}
 
-            {/* Submit Button */}
             {selectedServices.length > 0 && (
               <div className="mt-8 pt-6 border-t border-gray-100">
                 <button 
