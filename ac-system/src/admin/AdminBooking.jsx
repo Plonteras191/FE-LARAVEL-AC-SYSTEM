@@ -3,8 +3,19 @@ import DatePicker from 'react-datepicker';
 import { parseISO, format } from 'date-fns';
 import "react-datepicker/dist/react-datepicker.css";
 import BookingModal from '../components/bookingModal';
-import '../styles/Booking.css';
+import '../styles/AdminBooking.css';
 import apiClient from '../services/api';
+import { 
+  FaUser, 
+  FaPhone, 
+  FaEnvelope, 
+  FaMapMarkerAlt, 
+  FaTools, 
+  FaCalendarAlt, 
+  FaSnowflake, 
+  FaCheckCircle,
+  FaClipboardCheck
+} from 'react-icons/fa';
 
 const serviceOptions = {
   cleaning: "Cleaning",
@@ -175,59 +186,91 @@ const AdminBooking = () => {
   const handleModalClose = () => {
     setIsConfirmModalOpen(false);
   };
-
   return (
     <div className="booking-container admin-booking">
-      <h2>Admin Booking</h2>
-      {isLoading && <div className="loading-overlay">Loading...</div>}
+      <div className="booking-header">
+        <h2>Create New Booking</h2>
+        <p className="subtitle">Schedule a new service appointment for a customer</p>
+      </div>
+
+      {isLoading && (
+        <div className="loading-overlay">
+          <div className="loader"></div>
+          <p>Processing request...</p>
+        </div>
+      )}
+
       <div className="booking-box">
         <form id="adminBookingForm" onSubmit={handleSubmit}>
           <div className="form-section customer-details">
-            <h3>Customer Information</h3>
-            <div className="input-group">
-              <label htmlFor="name">Customer Name<span className="required">*</span></label>
-              <input 
-                type="text" 
-                id="name" 
-                name="name" 
-                placeholder="Enter customer name" 
-                required 
-                pattern="[A-Za-z ]+" 
-                title="Name should contain only letters and spaces."
-                disabled={isLoading}
-              />
+            <div className="section-header">
+              <FaUser className="section-icon" />
+              <h3>Customer Information</h3>
             </div>
-            
-            <div className="input-group">
-              <label htmlFor="phone">Phone Number<span className="required">*</span></label>
-              <input 
-                type="tel" 
-                id="phone" 
-                name="phone" 
-                placeholder="Enter 11-digit phone number" 
-                required 
-                pattern="^[0-9]{11}$" 
-                title="Phone number must be exactly 11 digits."
-                disabled={isLoading}
-              />
-            </div>
-            
-            <div className="input-group">
-              <label htmlFor="email">Email Address</label>
-              <input 
-                type="email" 
-                id="email" 
-                name="email" 
-                placeholder="Enter customer email (optional)"
-                disabled={isLoading}
-              />
+            <div className="input-grid">
+              <div className="input-group">
+                <label htmlFor="name">
+                  <FaUser className="input-icon" />
+                  Customer Name<span className="required">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  id="name" 
+                  name="name" 
+                  placeholder="Enter customer name" 
+                  required 
+                  pattern="[A-Za-z ]+" 
+                  title="Name should contain only letters and spaces."
+                  disabled={isLoading}
+                  className="styled-input"
+                />
+              </div>
+              
+              <div className="input-group">
+                <label htmlFor="phone">
+                  <FaPhone className="input-icon" />
+                  Phone Number<span className="required">*</span>
+                </label>
+                <input 
+                  type="tel" 
+                  id="phone" 
+                  name="phone" 
+                  placeholder="Enter 11-digit phone number" 
+                  required 
+                  pattern="^[0-9]{11}$" 
+                  title="Phone number must be exactly 11 digits."
+                  disabled={isLoading}
+                  className="styled-input"
+                />
+              </div>
+              
+              <div className="input-group">
+                <label htmlFor="email">
+                  <FaEnvelope className="input-icon" />
+                  Email Address
+                </label>
+                <input 
+                  type="email" 
+                  id="email" 
+                  name="email" 
+                  placeholder="Enter customer email (optional)"
+                  disabled={isLoading}
+                  className="styled-input"
+                />
+              </div>
             </div>
           </div>
 
           <div className="form-section address-section">
-            <h3>Service Location</h3>
+            <div className="section-header">
+              <FaMapMarkerAlt className="section-icon" />
+              <h3>Service Location</h3>
+            </div>
             <div className="input-group">
-              <label htmlFor="completeAddress">Complete Address<span className="required">*</span></label>
+              <label htmlFor="completeAddress">
+                <FaMapMarkerAlt className="input-icon" />
+                Complete Address<span className="required">*</span>
+              </label>
               <input 
                 type="text" 
                 id="completeAddress" 
@@ -235,12 +278,16 @@ const AdminBooking = () => {
                 placeholder="Enter customer's complete address" 
                 required
                 disabled={isLoading}
+                className="styled-input full-width"
               />
             </div>
           </div>
 
           <div className="form-section service-section">
-            <h3>Service Selection</h3>
+            <div className="section-header">
+              <FaTools className="section-icon" />
+              <h3>Service Selection</h3>
+            </div>
             <p className="section-hint">Select one or more services to book</p>
             <div className="service-options">
               {Object.entries(serviceOptions).map(([key, label]) => (
@@ -261,10 +308,16 @@ const AdminBooking = () => {
               <div className="service-configuration">
                 {selectedServices.map(service => (
                   <div key={service} className="service-config-box">
-                    <h4>{serviceOptions[service]} Service Details</h4>
+                    <h4>
+                      <FaClipboardCheck />
+                      {serviceOptions[service]} Service Details
+                    </h4>
                     
                     <div className="date-picker-group">
-                      <label>Date for {serviceOptions[service]}<span className="required">*</span></label>
+                      <label>
+                        <FaCalendarAlt className="input-icon" />
+                        Date for {serviceOptions[service]}<span className="required">*</span>
+                      </label>
                       <DatePicker
                         selected={serviceDates[service]}
                         onChange={(date) => handleServiceDateChange(service, date)}
@@ -280,7 +333,10 @@ const AdminBooking = () => {
                     </div>
                     
                     <div className="ac-type-group">
-                      <label>AC Types for {serviceOptions[service]}<span className="required">*</span></label>
+                      <label>
+                        <FaSnowflake className="input-icon" />
+                        AC Types for {serviceOptions[service]}<span className="required">*</span>
+                      </label>
                       <div className="ac-type-options">
                         {acTypeOptions.map(acType => (
                           <label key={`${service}-${acType}`} className="checkbox-container">
@@ -303,26 +359,32 @@ const AdminBooking = () => {
 
           <div className="form-submit">
             <button type="submit" disabled={isLoading}>
+              <FaCheckCircle />
               {isLoading ? "Processing..." : "Create Booking"}
             </button>
           </div>
         </form>
       </div>
       
-      {/* Booking Success Modal */}
       <BookingModal 
         isOpen={isConfirmModalOpen}
         onClose={handleModalClose}
         title="Booking Confirmation"
       >
         <div className="booking-success">
-          <h3>Booking Created Successfully!</h3>
+          <h3>
+            <FaCheckCircle />
+            Booking Created Successfully!
+          </h3>
           <p>The booking has been successfully created and saved to the system.</p>
           <div className="booking-reference">
+            <FaClipboardCheck />
             Reference ID: <span>{bookingRef}</span>
           </div>
           <div className="booking-success-actions">
-            <button onClick={handleModalClose}>Close</button>
+            <button onClick={handleModalClose}>
+              Close
+            </button>
           </div>
         </div>
       </BookingModal>

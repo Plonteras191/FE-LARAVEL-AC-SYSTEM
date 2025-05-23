@@ -84,10 +84,10 @@ const AdminCalendar = () => {
                   customer: appt.name || 'Customer',
                   phone: appt.phone,
                   email: appt.email,
-                  address: appt.complete_address,
-                  status: appt.status || 'Pending',
+                  address: appt.complete_address,                  status: appt.status || 'Pending',
                   acTypes: service.acTypes || service.ac_types || [],
-                  date: service.date
+                  date: service.date,
+                  technicians: appt.technicians || []
                 }
               });
             });
@@ -291,11 +291,16 @@ const AdminCalendar = () => {
                 <div className="tooltip-detail">
                   <FaMapMarkerAlt /> 
                   <span>{hoverEvent.extendedProps.address}</span>
-                </div>
-                <div className="tooltip-detail">
+                </div>                <div className="tooltip-detail">
                   <FaSnowflake /> 
                   <span>AC Types: {formatAcTypes(hoverEvent.extendedProps.acTypes)}</span>
                 </div>
+                {hoverEvent.extendedProps.technicians && hoverEvent.extendedProps.technicians.length > 0 && (
+                  <div className="tooltip-detail">
+                    <FaTools />
+                    <span>Technicians: {hoverEvent.extendedProps.technicians.join(', ')}</span>
+                  </div>
+                )}
                 <div className="tooltip-status">
                   <span className={`status-badge ${hoverEvent.extendedProps.status.toLowerCase().replace(' ', '-')}`}>
                     {hoverEvent.extendedProps.status}
@@ -344,11 +349,21 @@ const AdminCalendar = () => {
                 <div className="event-detail">
                   <span>Email: {selectedEvent.extendedProps.email}</span>
                 </div>
-              )}
-              <div className="event-detail">
+              )}              <div className="event-detail">
                 <FaMapMarkerAlt /> 
                 <span>Address: {selectedEvent.extendedProps.address}</span>
               </div>
+              {selectedEvent.extendedProps.technicians && selectedEvent.extendedProps.technicians.length > 0 && (
+                <div className="event-detail technicians">
+                  <FaTools />
+                  <span>Assigned Technicians:</span>
+                  <div className="technician-list">
+                    {selectedEvent.extendedProps.technicians.map((tech, index) => (
+                      <span key={index} className="technician-tag">{tech}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="event-detail booking-id">
                 <span>Booking ID: #{selectedEvent.extendedProps.bookingId}</span>
               </div>

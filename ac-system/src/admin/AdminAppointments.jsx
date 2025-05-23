@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../components/Modal';
 import { useNavigate } from 'react-router-dom';
+import { FaCalendar } from 'react-icons/fa';
 import '../styles/AdminAppointments.css';
 import PageWrapper from '../components/PageWrapper';
 import { appointmentsApi } from '../services/api';
@@ -17,8 +18,11 @@ const AdminAppointments = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
+  const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
+  const [selectedService, setSelectedService] = useState(null);
   const [modalType, setModalType] = useState('');
+  const [newServiceDate, setNewServiceDate] = useState('');
   
   // Technician assignment states
   const [selectedTechnicians, setSelectedTechnicians] = useState([]);
@@ -108,6 +112,15 @@ const AdminAppointments = () => {
     setSelectedAppointmentId(id);
     setModalType('complete');
     setIsCompleteModalOpen(true);
+  };  // Open modal to reschedule a service
+  const openRescheduleModal = (id, service) => {
+    setSelectedAppointmentId(id);
+    setSelectedService(service.type);
+    // Format the date to YYYY-MM-DD, handling both date-only and datetime formats
+    const serviceDate = service.date ? new Date(service.date) : new Date();
+    const formattedDate = serviceDate.toISOString().split('T')[0];
+    setNewServiceDate(formattedDate);
+    setIsRescheduleModalOpen(true);
   };
 
   // Confirm rejection and delete appointment
@@ -122,6 +135,7 @@ const AdminAppointments = () => {
     setIsConfirmModalOpen(false);
     setIsAcceptModalOpen(false);
     setIsCompleteModalOpen(false);
+    setIsRescheduleModalOpen(false);
     setSelectedAppointmentId(null);
     setModalType('');
     setSelectedTechnicians([]);
@@ -285,6 +299,41 @@ const AdminAppointments = () => {
         setSelectedAppointmentId(null);
       });
   };
+  // Confirm reschedule of a service
+  const confirmReschedule = async () => {
+    if (!selectedAppointmentId || !selectedService || !newServiceDate) {
+      toast.error('Please select a new date');
+      return;
+    }
+
+    const formattedDate = new Date(newServiceDate).toISOString().split('T')[0];
+    const payload = { 
+      service_name: selectedService, 
+      new_date: formattedDate // Send date in YYYY-MM-DD format
+    };
+    
+    try {
+      setIsLoading(true);
+      const response = await appointmentsApi.reschedule(selectedAppointmentId, payload);
+      if (response.data && !response.data.error) {
+        setAppointments(prev =>
+          prev.map(appt => (appt.id === selectedAppointmentId ? response.data : appt))
+        );
+        toast.success("Service rescheduled successfully");
+      } else {
+        toast.error(response.data.error || "Failed to reschedule service");
+      }
+    } catch (error) {
+      console.error("Error rescheduling service:", error);
+      toast.error("Failed to reschedule service");
+    } finally {
+      setIsLoading(false);
+      setIsRescheduleModalOpen(false);
+      setSelectedAppointmentId(null);
+      setSelectedService(null);
+      setNewServiceDate('');
+    }
+  };
 
   // Utility function to parse services JSON string
   const parseServices = (servicesStr) => {
@@ -392,79 +441,30 @@ const AdminAppointments = () => {
             {appointments.length === 0 && !isLoading ? (
               <p>No pending appointments available.</p>
             ) : (
-              <table className="appointments-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Customer</th>
-                    <th>Phone</th>
-                    <th>Email</th>
-                    <th>Service(s)</th>
-                    <th>AC Type(s)</th>
-                    <th>Address</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {getPaginatedData().map((appt) => {
-                    const services = parseServices(appt.services);
-                    return (
-                      <tr key={appt.id}>
-                        <td>{appt.id}</td>
-                        <td>{appt.name}</td>
-                        <td>{appt.phone}</td>
-                        <td>{appt.email || 'N/A'}</td>
-                        <td>
+              <div className="appointments-list">
+                {getPaginatedData().map((appt) => {
+                  const services = parseServices(appt.services);
+                  return (
+                    <div key={appt.id} className="appointment-card">
+                      <div className="appointment-info">
+                        <div className="appointment-field"><strong>ID:</strong> {appt.id}</div>
+                        <div className="appointment-field"><strong>Customer:</strong> {appt.name}</div>
+                        <div className="appointment-field"><strong>Phone:</strong> {appt.phone}</div>
+                        <div className="appointment-field"><strong>Email:</strong> {appt.email || 'N/A'}</div>
+                        <div className="appointment-field">
+                          <strong>Service(s):</strong> 
                           {services.length > 0 ? (
-                            services.map((s, index) => {
-                              const key = `${appt.id}-${s.type}-${index}`;
-                              return (
-                                <div key={key}>
-                                  <span>
-                                    {index + 1}. {s.type} on {s.date}
-                                  </span>
-                                  {rescheduleInputs[key] !== undefined ? (
-                                    <div className="reschedule-input-container">
-                                      <input
-                                        type="date"
-                                        value={rescheduleInputs[key]}
-                                        onChange={(e) =>
-                                          handleRescheduleInputChange(appt.id, s.type, index, e.target.value)
-                                        }
-                                        className="reschedule-date-input"
-                                      />
-                                      <button
-                                        className="confirm-button"
-                                        onClick={() => handleServiceRescheduleConfirm(appt.id, s.type, index)}
-                                        disabled={!rescheduleInputs[key] || isLoading}
-                                      >
-                                        Confirm
-                                      </button>
-                                      <button
-                                        className="cancel-button"
-                                        onClick={() => handleRescheduleCancel(appt.id, s.type, index)}
-                                        disabled={isLoading}
-                                      >
-                                        Cancel
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <button
-                                      className="reschedule-button"
-                                      onClick={() => toggleRescheduleInput(appt.id, s.type, index)}
-                                      disabled={isLoading}
-                                    >
-                                      Reschedule
-                                    </button>
-                                  )}
-                                </div>
-                              );
-                            })
+                            services.map((s, index) => (
+                              <div key={`${appt.id}-${s.type}-${index}`}>
+                                {index + 1}. {s.type} on {s.date}
+                              </div>
+                            ))
                           ) : (
                             'N/A'
                           )}
-                        </td>
-                        <td>
+                        </div>
+                        <div className="appointment-field">
+                          <strong>AC Type(s):</strong> 
                           {services.length > 0 ? (
                             services.map((s, sIndex) => (
                               <div key={`ac-${appt.id}-${sIndex}`}>
@@ -476,29 +476,38 @@ const AdminAppointments = () => {
                           ) : (
                             'N/A'
                           )}
-                        </td>
-                        <td>{appt.complete_address}</td>
-                        <td>
-                          <button 
-                            className="reject-button" 
-                            onClick={() => openRejectModal(appt.id)}
-                            disabled={isLoading}
+                        </div>
+                        <div className="appointment-field"><strong>Address:</strong> {appt.complete_address}</div>
+                      </div>
+                      <div className="appointment-actions">
+                        <button 
+                          className="reject-button" 
+                          onClick={() => openRejectModal(appt.id)}
+                          disabled={isLoading}
+                        >
+                          Reject
+                        </button>
+                        <button 
+                          className="accept-button" 
+                          onClick={() => openAcceptModal(appt.id)}
+                          disabled={isLoading}
+                        >
+                          Accept
+                        </button>                        {services.map((service, index) => (
+                          <button
+                            key={`reschedule-${appt.id}-${index}`}
+                            onClick={() => openRescheduleModal(appt.id, service)}
+                            className="reschedule-btn"
+                            title={`Reschedule ${service.type}`}
                           >
-                            Reject
+                            <FaCalendar />
                           </button>
-                          <button 
-                            className="accept-button" 
-                            onClick={() => openAcceptModal(appt.id)}
-                            disabled={isLoading}
-                          >
-                            Accept
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </>
         )}
@@ -711,6 +720,52 @@ const AdminAppointments = () => {
           onCancel={handleCancelModal}
           actionType="complete"
         />
+
+        {/* Reschedule Modal */}
+        {isRescheduleModalOpen && (
+          <div className="modal-overlay">
+            <div className="modal-content reschedule-modal">
+              <h3>Reschedule Service</h3>
+              <p>Are you sure you want to reschedule this service to the new date? A notification email will be sent to the customer.</p>
+              <div className="reschedule-details">
+                <p><strong>Appointment ID:</strong> {selectedAppointmentId}</p>
+                <p><strong>Service:</strong> {selectedService}</p>
+                
+                <div className="new-date-input">
+                  <label htmlFor="newServiceDate">New Date:</label>
+                  <div className="input-group">
+                    <input
+                      id="newServiceDate"
+                      type="date"
+                      value={newServiceDate}
+                      onChange={(e) => setNewServiceDate(e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
+                      required
+                      className="datetime-input"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="modal-actions">
+                <button 
+                  className="modal-confirm-button"
+                  onClick={confirmReschedule}
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Processing...' : 'Confirm Reschedule'}
+                </button>
+                <button 
+                  className="modal-cancel-button"
+                  onClick={handleCancelModal}
+                  disabled={isLoading}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </PageWrapper>
   );

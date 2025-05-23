@@ -10,11 +10,34 @@ import {
   FaFileExcel,
   FaFileCsv,
   FaAngleLeft,
-  FaAngleRight
+  FaAngleRight,
+  FaUserCog
 } from 'react-icons/fa';
 import '../styles/AdminReports.css';
 import * as XLSX from 'xlsx';
 import apiClient, { appointmentsApi } from '../services/api';
+
+// Technicians List Component
+const TechniciansList = ({ technicians }) => {
+  if (!technicians || technicians.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="technicians-section">
+      <p className="technicians-header">
+        <FaUserCog className="icon" /> <strong>Assigned Technicians:</strong>
+      </p>
+      <ul className="technicians-list">
+        {technicians.map((tech, index) => (
+          <li key={index} className="technician-item">
+            {tech}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
 
 const AdminReports = () => {
   const [appointments, setAppointments] = useState([]);
@@ -664,6 +687,7 @@ const AdminReports = () => {
                               <p>No service details available</p>
                             )}
                           </div>
+                          <TechniciansList technicians={app.technicians} />
                         </div>
                       </div>
                     );
@@ -723,6 +747,7 @@ const AdminReports = () => {
                               <p>No service details available</p>
                             )}
                           </div>
+                          <TechniciansList technicians={app.technicians} />
                         </div>
                       </div>
                     );
@@ -780,6 +805,7 @@ const AdminReports = () => {
                               <p>No service details available</p>
                             )}
                           </div>
+                          <TechniciansList technicians={app.technicians} />
                         </div>
                       </div>
                     );
@@ -828,22 +854,45 @@ const AdminReports = () => {
         </div>
       ) : (
         <>
-          <div className="table-container">
-            <table className="revenue-history-table">
+          <div className="table-container">            <table className="revenue-history-table">
               <thead>
                 <tr>
                   <th>Date Recorded</th>
-                  <th>Service Type</th>
-                  <th>Booking ID</th>
+                  <th>Customer</th>
+                  <th>Status</th>
+                  <th>Service Types</th>
+                  <th>Appointment Dates</th>
                   <th>Total Revenue</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedRevenueHistory.map((entry, index) => (
-                  <tr key={index}>
+                  <tr key={index} className="revenue-row">
                     <td className="date-column">{entry.revenue_date}</td>
-                    <td className="service-column">{entry.service_types || 'N/A'}</td>
-                    <td className="booking-column">{entry.booking_id || 'N/A'}</td>
+                    <td className="customer-column">
+                      <div className="customer-info">
+                        <div>{entry.customer_name}</div>
+                        <div className="customer-contact">
+                          {entry.customer_phone}
+                          {entry.customer_email && <span> | {entry.customer_email}</span>}
+                        </div>
+                      </div>
+                    </td>
+                    <td className={`status-column ${entry.status_name.toLowerCase()}`}>
+                      {entry.status_name}
+                    </td>
+                    <td className="service-column">
+                      {entry.service_types.split(', ').map((service, i) => (
+                        <span key={i} className="service-tag">{service}</span>
+                      ))}
+                    </td>
+                    <td className="dates-column">
+                      {entry.appointment_dates.split(', ').map((date, i) => (
+                        <div key={i} className="appointment-date">
+                          {new Date(date).toLocaleDateString()}
+                        </div>
+                      ))}
+                    </td>
                     <td className="amount-column">{formatCurrency(entry.total_revenue)}</td>
                   </tr>
                 ))}
