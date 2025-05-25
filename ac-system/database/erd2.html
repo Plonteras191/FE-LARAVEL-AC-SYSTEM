@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database ERD</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2c3e50; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Entity Relationship Diagram</h1>
+        <div class="mermaid">
+erDiagram
+    customers ||--o{ bookings : "has"
+    booking_statuses ||--o{ bookings : "has status"
+    bookings ||--o{ booking_services : "includes"
+    bookings ||--|{ revenue : "generates"
+
+    bookings }o--o{ booking_technicians : "assigned via"
+    technicians ||--o{ booking_technicians : "assigned to"
+
+    booking_services }o--o{ booking_actypes : "for AC type via"
+    ac_types ||--o{ booking_actypes : "is type for"
+
+
+    customers {
+        BIGINT_UNSIGNED id PK "AUTO_INCREMENT"
+        VARCHAR_255 name "NOT NULL"
+        VARCHAR_255 email "NULL"
+        VARCHAR_50 phone "NOT NULL, INDEX"
+        TEXT complete_address "NOT NULL"
+        TIMESTAMP created_at "NULL"
+        TIMESTAMP updated_at "NULL"
+    }
+
+    technicians {
+        BIGINT_UNSIGNED id PK "AUTO_INCREMENT"
+        VARCHAR_255 name "NOT NULL"
+    }
+
+    booking_statuses {
+        TINYINT_UNSIGNED id PK "AUTO_INCREMENT"
+        VARCHAR_50 status_name "NOT NULL, UNIQUE"
+    }
+
+    ac_types {
+        BIGINT_UNSIGNED id PK "AUTO_INCREMENT"
+        VARCHAR_50 type_name "NOT NULL, UNIQUE"
+    }
+
+    bookings {
+        BIGINT_UNSIGNED id PK "AUTO_INCREMENT"
+        BIGINT_UNSIGNED customer_id FK "REFERENCES customers(id) ON DELETE CASCADE"
+        TINYINT_UNSIGNED status_id FK "REFERENCES booking_statuses(id), DEFAULT 1"
+        TIMESTAMP created_at "NOT NULL, DEFAULT CURRENT_TIMESTAMP"
+    }
+
+    booking_services {
+        BIGINT_UNSIGNED id PK "AUTO_INCREMENT"
+        BIGINT_UNSIGNED booking_id FK "REFERENCES bookings(id) ON DELETE CASCADE"
+        VARCHAR_50 service_type "NOT NULL"
+        DATE appointment_date "NOT NULL"
+    }
+
+    booking_technicians {
+        BIGINT_UNSIGNED id PK "AUTO_INCREMENT"
+        BIGINT_UNSIGNED booking_id FK "REFERENCES bookings(id) ON DELETE CASCADE"
+        BIGINT_UNSIGNED technician_id FK "REFERENCES technicians(id) ON DELETE CASCADE"
+        UNIQUE "uq_booking_technician (booking_id, technician_id)"
+    }
+
+    booking_actypes {
+        BIGINT_UNSIGNED id PK "AUTO_INCREMENT"
+        BIGINT_UNSIGNED booking_service_id FK "REFERENCES booking_services(id) ON DELETE CASCADE"
+        BIGINT_UNSIGNED ac_type_id FK "REFERENCES ac_types(id) ON DELETE RESTRICT"
+        UNIQUE "uq_booking_actype (booking_service_id, ac_type_id)"
+    }
+
+    revenue {
+        BIGINT_UNSIGNED id PK "AUTO_INCREMENT"
+        BIGINT_UNSIGNED booking_id FK "REFERENCES bookings(id) ON DELETE CASCADE, UNIQUE"
+        DATE revenue_date "NOT NULL"
+        DECIMAL_10_2 total_revenue "NOT NULL"
+        TIMESTAMP created_at "NOT NULL, DEFAULT CURRENT_TIMESTAMP"
+    }
+        </div>
+    </div>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</body>
+</html>

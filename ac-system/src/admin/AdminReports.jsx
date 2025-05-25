@@ -1,43 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  FaCheckCircle, 
-  FaClock, 
-  FaChartLine, 
-  FaCalendarAlt, 
-  FaBan, 
-  FaMoneyBillWave,
-  FaDownload,
-  FaFileExcel,
-  FaFileCsv,
-  FaAngleLeft,
-  FaAngleRight,
-  FaUserCog
-} from 'react-icons/fa';
+import { FaCalendarAlt } from 'react-icons/fa';
 import '../styles/AdminReports.css';
 import * as XLSX from 'xlsx';
 import apiClient, { appointmentsApi } from '../services/api';
-
-// Technicians List Component
-const TechniciansList = ({ technicians }) => {
-  if (!technicians || technicians.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="technicians-section">
-      <p className="technicians-header">
-        <FaUserCog className="icon" /> <strong>Assigned Technicians:</strong>
-      </p>
-      <ul className="technicians-list">
-        {technicians.map((tech, index) => (
-          <li key={index} className="technician-item">
-            {tech}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-};
+import ReportStats from '../components/ReportStats';
+import ReportTabs from '../components/ReportTabs';
+import RevenueHistory from '../components/RevenueHistory';
+import AppointmentReports from '../components/AppointmentReports';
+import ExportControls from '../components/ExportControls';
 
 const AdminReports = () => {
   const [appointments, setAppointments] = useState([]);
@@ -448,498 +418,61 @@ const AdminReports = () => {
         </div>
       </div>
 
-      <div className="dashboard-stats">
-        <div className="stat-card">
-          <div className="stat-icon completed">
-            <FaCheckCircle />
-          </div>
-          <div className="stat-info">
-            <h3>{completeAppointments.length}</h3>
-            <p>Completed</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon pending">
-            <FaClock />
-          </div>
-          <div className="stat-info">
-            <h3>{pendingAppointments.length + acceptedAppointments.length}</h3>
-            <p>Pending/Accepted</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon revenue">
-            <FaChartLine />
-          </div>
-          <div className="stat-info">
-            <h3>{formatCurrency(totalRevenueAmount)}</h3>
-            <p>Total Revenue</p>
-          </div>
-        </div>
-      </div>
+      <ReportStats 
+        completeAppointments={completeAppointments}
+        pendingAppointments={pendingAppointments}
+        acceptedAppointments={acceptedAppointments}
+        totalRevenueAmount={totalRevenueAmount}
+        formatCurrency={formatCurrency}
+      />
 
-      <div className="tab-navigation">
-        <button 
-          className={activeTab === 'overview' ? 'active' : ''} 
-          onClick={() => setActiveTab('overview')}
-        >
-          Overview
-        </button>
-        <button 
-          className={activeTab === 'completed' ? 'active' : ''} 
-          onClick={() => setActiveTab('completed')}
-        >
-          Completed Appointments
-        </button>
-        <button 
-          className={activeTab === 'pending' ? 'active' : ''} 
-          onClick={() => setActiveTab('pending')}
-        >
-          Pending/Accepted Appointments
-        </button>
-        <button 
-          className={activeTab === 'rejected' ? 'active' : ''} 
-          onClick={() => setActiveTab('rejected')}
-        >
-          Rejected Appointments
-        </button>
-        <button 
-          className={activeTab === 'revenue' ? 'active' : ''} 
-          onClick={() => setActiveTab('revenue')}
-        >
-          Revenue History
-        </button>
-      </div>
+      <ReportTabs 
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+      />
 
-      {/* Export buttons for all tabs except overview */}
-      {activeTab !== 'overview' && (
-        <div className="export-controls">
-          <div className="export-buttons">
-            <button 
-              className="export-btn csv" 
-              onClick={() => exportData('csv')}
-              title="Download as CSV"
-            >
-              <FaFileCsv /> Export CSV
-            </button>
-            <button 
-              className="export-btn excel" 
-              onClick={() => exportData('excel')}
-              title="Download as Excel"
-            >
-              <FaFileExcel /> Export Excel
-            </button>
-          </div>
-          
-          {/* Revenue date filter */}
-          {activeTab === 'revenue' && (
-            <div className="revenue-filter-controls">
-              <div className="filter-group">
-                <label>Filter by date:</label>
-                <div className="date-filter">
-                  <input 
-                    type="date" 
-                    className="date-picker"
-                    value={selectedDate}
-                    onChange={handleDateChange}
-                  />
-                  {selectedDate && (
-                    <button 
-                      className="clear-filter-btn"
-                      onClick={clearDateFilter}
-                      title="Clear date filter"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+      <ExportControls 
+        activeTab={activeTab}
+        exportData={exportData}
+        selectedDate={selectedDate}
+        handleDateChange={handleDateChange}
+        clearDateFilter={clearDateFilter}
+      />
 
       <div className="reports-content">
-        {activeTab === 'overview' && (
-          <div className="reports-grid">
-            {/* Completed Appointments */}
-            <div className="report-box complete">
-              <h3><FaCheckCircle className="report-icon" /> Completed Appointments</h3>
-              <div className="scrollable-content">
-                {completeAppointments.length > 0 ? (
-                  <ul>
-                    {completeAppointments.slice(0, 5).map(app => (
-                      <li key={app.id} className="appointment-item">
-                        <div className="appointment-header">
-                          <span className="appointment-id">#{app.id}</span>
-                          <span className="appointment-name">{app.name}</span>
-                        </div>
-                        <div className="appointment-date">
-                          <FaCalendarAlt /> {getAppointmentDate(app)}
-                        </div>
-                      </li>
-                    ))}
-                    {completeAppointments.length > 5 && (
-                      <button className="view-more" onClick={() => setActiveTab('completed')}>
-                        View all {completeAppointments.length} appointments
-                      </button>
-                    )}
-                  </ul>
-                ) : (
-                  <div className="empty-state">No completed appointments.</div>
-                )}
-              </div>
-            </div>
-
-            {/* Active Appointments (Pending + Accepted) */}
-            <div className="report-box pending">
-              <h3><FaClock className="report-icon" /> Pending/Accepted Appointments</h3>
-              <div className="scrollable-content">
-                {pendingAppointments.length + acceptedAppointments.length > 0 ? (
-                  <ul>
-                    {[...pendingAppointments, ...acceptedAppointments].slice(0, 5).map(app => (
-                      <li key={app.id} className="appointment-item">
-                        <div className="appointment-header">
-                          <span className="appointment-id">#{app.id}</span>
-                          <span className="appointment-name">{app.name}</span>
-                          <span className="appointment-status">{app.status || 'Pending'}</span>
-                        </div>
-                        <div className="appointment-date">
-                          <FaCalendarAlt /> {getAppointmentDate(app)}
-                        </div>
-                      </li>
-                    ))}
-                    {pendingAppointments.length + acceptedAppointments.length > 5 && (
-                      <button className="view-more" onClick={() => setActiveTab('pending')}>
-                        View all {pendingAppointments.length + acceptedAppointments.length} appointments
-                      </button>
-                    )}
-                  </ul>
-                ) : (
-                  <div className="empty-state">No Pending/Accepted appointments.</div>
-                )}
-              </div>
-            </div>
-
-            {/* Rejected Appointments */}
-            <div className="report-box rejected">
-              <h3><FaBan className="report-icon" /> Rejected Appointments</h3>
-              <div className="scrollable-content">
-                {rejectedAppointments.length > 0 ? (
-                  <ul>
-                    {rejectedAppointments.slice(0, 5).map(app => (
-                      <li key={app.id} className="appointment-item">
-                        <div className="appointment-header">
-                          <span className="appointment-id">#{app.id}</span>
-                          <span className="appointment-name">{app.name}</span>
-                        </div>
-                        <div className="appointment-date">
-                          <FaCalendarAlt /> {getAppointmentDate(app)}
-                        </div>
-                      </li>
-                    ))}
-                    {rejectedAppointments.length > 5 && (
-                      <button className="view-more" onClick={() => setActiveTab('rejected')}>
-                        View all {rejectedAppointments.length} appointments
-                      </button>
-                    )}
-                  </ul>
-                ) : (
-                  <div className="empty-state">No rejected appointments.</div>
-                )}
-              </div>
-            </div>
-          </div>
+        {activeTab === 'revenue' ? (
+          <RevenueHistory 
+            selectedDate={selectedDate}
+            filteredRevenueHistory={filteredRevenueHistory}
+            paginatedRevenueHistory={paginatedRevenueHistory}
+            clearDateFilter={clearDateFilter}
+            formatCurrency={formatCurrency}
+            filteredTotalRevenue={filteredTotalRevenue}
+            currentPage={currentPage}
+            getTotalPages={getTotalPages}
+            handlePageChange={handlePageChange}
+          />
+        ) : (
+          <AppointmentReports 
+            activeTab={activeTab}
+            completeAppointments={completeAppointments}
+            pendingAppointments={pendingAppointments}
+            acceptedAppointments={acceptedAppointments}
+            rejectedAppointments={rejectedAppointments}
+            paginatedCompletedAppointments={paginatedCompletedAppointments}
+            paginatedPendingAppointments={paginatedPendingAppointments}
+            paginatedRejectedAppointments={paginatedRejectedAppointments}
+            parseServices={parseServices}
+            getAppointmentDate={getAppointmentDate}
+            currentPage={currentPage}
+            getTotalPages={getTotalPages}
+            handlePageChange={handlePageChange}
+            setActiveTab={setActiveTab}
+          />
         )}
-
-        {activeTab === 'completed' && (
-          <div className="full-width-section">
-            <h3><FaCheckCircle className="report-icon" /> All Completed Appointments</h3>
-            {completeAppointments.length > 0 ? (
-              <>
-                <div className="appointment-list">
-                  {paginatedCompletedAppointments.map(app => {
-                    const services = parseServices(app.services);
-                    return (
-                      <div key={app.id} className="appointment-card">
-                        <div className="appointment-card-header">
-                          <span className="appointment-id">#{app.id}</span>
-                          <span className="status-badge completed">Completed</span>
-                        </div>
-                        <div className="appointment-card-body">
-                          <h4>{app.name}</h4>
-                          <p><strong>Contact:</strong> {app.phone} | {app.email || 'N/A'}</p>
-                          <p><strong>Address:</strong> {app.complete_address}</p>
-                          <div className="services-list">
-                            <p><strong>Services:</strong></p>
-                            {services.length > 0 ? (
-                              <ul>
-                                {services.map((service, idx) => (
-                                  <li key={idx}>
-                                    {service.type} on {new Date(service.date).toLocaleDateString()} 
-                                    {service.ac_types && service.ac_types.length > 0 && (
-                                      <span> | AC Types: {service.ac_types.join(', ')}</span>
-                                    )}
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              <p>No service details available</p>
-                            )}
-                          </div>
-                          <TechniciansList technicians={app.technicians} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                
-                {/* Pagination controls */}
-                {getTotalPages(completeAppointments.length) > 1 && (
-                  <Pagination 
-                    currentPage={currentPage.completed}
-                    totalPages={getTotalPages(completeAppointments.length)}
-                    onPageChange={handlePageChange}
-                    section="completed"
-                  />
-                )}
-              </>
-            ) : (
-              <div className="empty-state">No completed appointments found.</div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'pending' && (
-          <div className="full-width-section">
-            <h3><FaClock className="report-icon" /> All Active Appointments</h3>
-            {pendingAppointments.length + acceptedAppointments.length > 0 ? (
-              <>
-                <div className="appointment-list">
-                  {paginatedPendingAppointments.map(app => {
-                    const services = parseServices(app.services);
-                    return (
-                      <div key={app.id} className="appointment-card">
-                        <div className="appointment-card-header">
-                          <span className="appointment-id">#{app.id}</span>
-                          <span className={`status-badge ${app.status?.toLowerCase() || 'pending'}`}>
-                            {app.status || 'Pending'}
-                          </span>
-                        </div>
-                        <div className="appointment-card-body">
-                          <h4>{app.name}</h4>
-                          <p><strong>Contact:</strong> {app.phone} | {app.email || 'N/A'}</p>
-                          <p><strong>Address:</strong> {app.complete_address}</p>
-                          <div className="services-list">
-                            <p><strong>Services:</strong></p>
-                            {services.length > 0 ? (
-                              <ul>
-                                {services.map((service, idx) => (
-                                  <li key={idx}>
-                                    {service.type} on {new Date(service.date).toLocaleDateString()} 
-                                    {service.ac_types && service.ac_types.length > 0 && (
-                                      <span> | AC Types: {service.ac_types.join(', ')}</span>
-                                    )}
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              <p>No service details available</p>
-                            )}
-                          </div>
-                          <TechniciansList technicians={app.technicians} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                
-                {/* Pagination controls */}
-                {getTotalPages(pendingAppointments.length + acceptedAppointments.length) > 1 && (
-                  <Pagination 
-                    currentPage={currentPage.pending}
-                    totalPages={getTotalPages(pendingAppointments.length + acceptedAppointments.length)}
-                    onPageChange={handlePageChange}
-                    section="pending"
-                  />
-                )}
-              </>
-            ) : (
-              <div className="empty-state">No active appointments found.</div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'rejected' && (
-          <div className="full-width-section">
-            <h3><FaBan className="report-icon" /> All Rejected Appointments</h3>
-            {rejectedAppointments.length > 0 ? (
-              <>
-                <div className="appointment-list">
-                  {paginatedRejectedAppointments.map(app => {
-                    const services = parseServices(app.services);
-                    return (
-                      <div key={app.id} className="appointment-card">
-                        <div className="appointment-card-header">
-                          <span className="appointment-id">#{app.id}</span>
-                          <span className="status-badge rejected">Rejected</span>
-                        </div>
-                        <div className="appointment-card-body">
-                          <h4>{app.name}</h4>
-                          <p><strong>Contact:</strong> {app.phone} | {app.email || 'N/A'}</p>
-                          <p><strong>Address:</strong> {app.complete_address}</p>
-                          <div className="services-list">
-                            <p><strong>Services:</strong></p>
-                            {services.length > 0 ? (
-                              <ul>
-                                {services.map((service, idx) => (
-                                  <li key={idx}>
-                                    {service.type} on {new Date(service.date).toLocaleDateString()} 
-                                    {service.ac_types && service.ac_types.length > 0 && (
-                                      <span> | AC Types: {service.ac_types.join(', ')}</span>
-                                    )}
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              <p>No service details available</p>
-                            )}
-                          </div>
-                          <TechniciansList technicians={app.technicians} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                
-                {/* Pagination controls */}
-                {getTotalPages(rejectedAppointments.length) > 1 && (
-                  <Pagination 
-                    currentPage={currentPage.rejected}
-                    totalPages={getTotalPages(rejectedAppointments.length)}
-                    onPageChange={handlePageChange}
-                    section="rejected"
-                  />
-                )}
-              </>
-            ) : (
-              <div className="empty-state">No rejected appointments found.</div>
-            )}
-          </div>
-        )}
-
-{activeTab === 'revenue' && (
-  <div className="revenue-history-container">
-    <div className="revenue-history-header">
-      <h3><FaMoneyBillWave className="report-icon" /> Revenue History</h3>
-      <p className="revenue-history-subtitle">
-        {selectedDate 
-          ? `Viewing revenue for: ${new Date(selectedDate).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })}`
-          : 'View and track your historical revenue records'
-        }
-      </p>
+      </div>
     </div>
-    
-    <div className="revenue-history-box">
-      {filteredRevenueHistory.length === 0 ? (
-        <div className="no-data-message">
-          <div className="empty-state-icon">📊</div>
-          <p>{selectedDate ? 'No revenue records found for the selected date.' : 'No revenue history available.'}</p>
-          {selectedDate && <button className="clear-filter-btn" onClick={clearDateFilter}>Clear Filter</button>}
-          {!selectedDate && <p className="empty-state-hint">Revenue records you save will appear here.</p>}
-        </div>
-      ) : (
-        <>
-          <div className="table-container">            <table className="revenue-history-table">
-              <thead>
-                <tr>
-                  <th>Date Recorded</th>
-                  <th>Customer</th>
-                  <th>Status</th>
-                  <th>Service Types</th>
-                  <th>Appointment Dates</th>
-                  <th>Total Revenue</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedRevenueHistory.map((entry, index) => (
-                  <tr key={index} className="revenue-row">
-                    <td className="date-column">{entry.revenue_date}</td>
-                    <td className="customer-column">
-                      <div className="customer-info">
-                        <div>{entry.customer_name}</div>
-                        <div className="customer-contact">
-                          {entry.customer_phone}
-                          {entry.customer_email && <span> | {entry.customer_email}</span>}
-                        </div>
-                      </div>
-                    </td>
-                    <td className={`status-column ${entry.status_name.toLowerCase()}`}>
-                      {entry.status_name}
-                    </td>
-                    <td className="service-column">
-                      {entry.service_types.split(', ').map((service, i) => (
-                        <span key={i} className="service-tag">{service}</span>
-                      ))}
-                    </td>
-                    <td className="dates-column">
-                      {entry.appointment_dates.split(', ').map((date, i) => (
-                        <div key={i} className="appointment-date">
-                          {new Date(date).toLocaleDateString()}
-                        </div>
-                      ))}
-                    </td>
-                    <td className="amount-column">{formatCurrency(entry.total_revenue)}</td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr>
-                  <td colSpan="3" className="total-label">
-                    {selectedDate ? 'Selected Date Total' : 'All-time Total'}
-                  </td>
-                  <td className="total-value">{formatCurrency(filteredTotalRevenue)}</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-          
-          <div className="history-summary">
-            <div className="summary-card">
-              <div className="summary-title">
-                {selectedDate ? 'Filtered Records' : 'Total Records'}
-              </div>
-              <div className="summary-value">{filteredRevenueHistory.length}</div>
-            </div>
-            <div className="summary-card">
-              <div className="summary-title">
-                {selectedDate ? 'Filtered Revenue' : 'All-time Revenue'}
-              </div>
-              <div className="summary-value revenue-total">{formatCurrency(filteredTotalRevenue)}</div>
-            </div>
-          </div>
-          
-          {/* Pagination controls for revenue */}
-          {getTotalPages(filteredRevenueHistory.length) > 1 && (
-            <Pagination 
-              currentPage={currentPage.revenue}
-              totalPages={getTotalPages(filteredRevenueHistory.length)}
-              onPageChange={handlePageChange}
-              section="revenue"
-            />
-          )}
-        </>
-      )}
-    </div>
-  </div>
-)}
-</div>
-</div>
-);
+  );
 };
 
 export default AdminReports;

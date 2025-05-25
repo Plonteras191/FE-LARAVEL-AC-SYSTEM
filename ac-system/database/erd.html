@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Schema Tables</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+            line-height: 1.4;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        
+        .grid.two-col {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .grid.single-col {
+            grid-template-columns: 1fr;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .table-container {
+            margin-bottom: 30px;
+        }
+        
+        .table-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 2px solid #333;
+            font-size: 14px;
+        }
+        
+        th, td {
+            border: 1px solid #333;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        
+        .pk {
+            background-color: #fff2cc;
+        }
+        
+        .fk {
+            background-color: #dae8fc;
+        }
+        
+        /* Relationship arrows */
+        .relationships {
+            position: relative;
+            margin: 40px 0;
+        }
+        
+        svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .arrow-line {
+            stroke: #666;
+            stroke-width: 2;
+            fill: none;
+            marker-end: url(#arrowhead);
+        }
+        
+        .relationship-label {
+            background: white;
+            padding: 2px 6px;
+            border: 1px solid #666;
+            font-size: 12px;
+            font-weight: bold;
+            position: absolute;
+            z-index: 2;
+        }
+        
+        @media (max-width: 1000px) {
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .grid, .grid.two-col {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="grid">
+            <!-- Customers -->
+            <div class="table-container">
+                <div class="table-title">Customers</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="pk">Customer_id (pk)</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>John Smith</td>
+                            <td>john@email.com</td>
+                            <td>+1234567890</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>Sarah Johnson</td>
+                            <td>sarah@email.com</td>
+                            <td>+1987654321</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>Mike Wilson</td>
+                            <td>mike@email.com</td>
+                            <td>+1122334455</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>Lisa Brown</td>
+                            <td>lisa@email.com</td>
+                            <td>+1555666777</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Technicians -->
+            <div class="table-container">
+                <div class="table-title">Technicians</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="pk">Technician_id (pk)</th>
+                            <th>Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>Alex Martinez</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>David Chen</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>Emma Rodriguez</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>James Taylor</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Booking Statuses -->
+            <div class="table-container">
+                <div class="table-title">Booking Statuses</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="pk">Status_id (pk)</th>
+                            <th>Status_Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>Pending</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>Confirmed</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>In Progress</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>Completed</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="grid two-col">
+            <!-- Bookings -->
+            <div class="table-container">
+                <div class="table-title">Bookings</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="pk">Booking_id (pk)</th>
+                            <th class="fk">Customer_id (fk)</th>
+                            <th class="fk">Status_id (fk)</th>
+                            <th>Created_at</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>2</td>
+                            <td>2025-05-10</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>2</td>
+                            <td>3</td>
+                            <td>2025-05-11</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>3</td>
+                            <td>1</td>
+                            <td>2025-05-12</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>4</td>
+                            <td>4</td>
+                            <td>2025-05-13</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- AC Types -->
+            <div class="table-container">
+                <div class="table-title">AC Types</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="pk">AC_Type_id (pk)</th>
+                            <th>Type_Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>Split AC</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>Window AC</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>Central AC</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>Portable AC</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="grid">
+            <!-- Booking Services -->
+            <div class="table-container">
+                <div class="table-title">Booking Service</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="pk">Booking_Service_id (pk)</th>
+                            <th class="fk">Booking_id (fk)</th>
+                            <th>Service_Type</th>
+                            <th>Appointment_Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>Cleaning</td>
+                            <td>2025-05-10</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>2</td>
+                            <td>Repair</td>
+                            <td>2025-05-14</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>3</td>
+                            <td>Installation</td>
+                            <td>2025-05-15</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>4</td>
+                            <td>Checkup and Maintenance</td>
+                            <td>2025-05-17</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Booking Technicians -->
+            <div class="table-container">
+                <div class="table-title">Booking Technicians</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="pk">Booking_Tech_id (pk)</th>
+                            <th class="fk">Booking_id (fk)</th>
+                            <th class="fk">Technician_id (fk)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>2</td>
+                            <td>2</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>3</td>
+                            <td>3</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>4</td>
+                            <td>4</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Revenue -->
+            <div class="table-container">
+                <div class="table-title">Revenue</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="pk">Revenue_id (pk)</th>
+                            <th class="fk">Booking_id (fk)</th>
+                            <th>Revenue_Date</th>
+                            <th>Total_Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>2025-05-10</td>
+                            <td>1500.00</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>2</td>
+                            <td>2025-05-14</td>
+                            <td>2500.00</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>3</td>
+                            <td>2025-05-15</td>
+                            <td>4000.00</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>4</td>
+                            <td>2025-05-17</td>
+                            <td>1200.00</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="grid single-col">
+            <!-- Booking AC Types -->
+            <div class="table-container">
+                <div class="table-title">Booking ACtype</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="pk">Booking_ACtype_id (pk)</th>
+                            <th class="fk">Booking_Service_id (fk)</th>
+                            <th>AC_type_id</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>2</td>
+                            <td>2</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>3</td>
+                            <td>3</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>4</td>
+                            <td>4</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Relationship arrows -->
+        <div class="relationships">
+            <svg width="100%" height="600px">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+                            refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
+                    </marker>
+                </defs>
+                
+                <!-- Customers to Bookings -->
+                <line class="arrow-line" x1="200" y1="150" x2="350" y2="200" />
+                
+                <!-- Booking Statuses to Bookings -->
+                <line class="arrow-line" x1="600" y1="150" x2="500" y2="200" />
+                
+                <!-- Bookings to Booking Services -->
+                <line class="arrow-line" x1="400" y1="280" x2="200" y2="350" />
+                
+                <!-- Bookings to Booking Technicians -->
+                <line class="arrow-line" x1="450" y1="280" x2="500" y2="350" />
+                
+                <!-- Bookings to Revenue -->
+                <line class="arrow-line" x1="500" y1="280" x2="700" y2="350" />
+                
+                <!-- Technicians to Booking Technicians -->
+                <line class="arrow-line" x1="400" y1="100" x2="500" y2="350" />
+                
+                <!-- AC Types to Booking AC Types -->
+                <line class="arrow-line" x1="700" y1="280" x2="400" y2="500" />
+                
+                <!-- Booking Services to Booking AC Types -->
+                <line class="arrow-line" x1="200" y1="450" x2="350" y2="500" />
+            </svg>
+            
+            <!-- Relationship labels -->
+            <div class="relationship-label" style="top: 170px; left: 270px;">1:N</div>
+            <div class="relationship-label" style="top: 170px; left: 530px;">1:N</div>
+            <div class="relationship-label" style="top: 310px; left: 290px;">1:N</div>
+            <div class="relationship-label" style="top: 310px; left: 470px;">M:N</div>
+            <div class="relationship-label" style="top: 310px; left: 590px;">1:1</div>
+            <div class="relationship-label" style="top: 220px; left: 440px;">1:N</div>
+            <div class="relationship-label" style="top: 380px; left: 540px;">1:N</div>
+            <div class="relationship-label" style="top: 470px; left: 270px;">1:N</div>
+        </div>
+    </div>
+</body>
+</html>

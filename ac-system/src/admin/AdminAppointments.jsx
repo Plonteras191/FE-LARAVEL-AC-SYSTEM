@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import Modal from '../components/Modal';
 import { useNavigate } from 'react-router-dom';
-import { FaCalendar } from 'react-icons/fa';
 import '../styles/AdminAppointments.css';
 import PageWrapper from '../components/PageWrapper';
 import { appointmentsApi } from '../services/api';
 import { toast } from 'react-toastify';
+import AppointmentList from '../components/AppointmentList';
+import AppointmentModals from '../components/AppointmentModals';
+import PaginationControls from '../components/PaginationControls';
 
 const AdminAppointments = () => {
   const [appointments, setAppointments] = useState([]);
@@ -419,353 +420,53 @@ const AdminAppointments = () => {
           </button>
         </div>
 
-        {/* Pagination Controls */}
-        <div className="pagination-controls">
-          <div className="items-per-page">
-            <label htmlFor="itemsPerPage">Items per page: </label>
-            <select 
-              id="itemsPerPage" 
-              value={itemsPerPage} 
-              onChange={handleItemsPerPageChange}
-            >
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Pending Appointments Table */}
-        {activeTab === 'pending' && (
-          <>
-            {appointments.length === 0 && !isLoading ? (
-              <p>No pending appointments available.</p>
-            ) : (
-              <div className="appointments-list">
-                {getPaginatedData().map((appt) => {
-                  const services = parseServices(appt.services);
-                  return (
-                    <div key={appt.id} className="appointment-card">
-                      <div className="appointment-info">
-                        <div className="appointment-field"><strong>ID:</strong> {appt.id}</div>
-                        <div className="appointment-field"><strong>Customer:</strong> {appt.name}</div>
-                        <div className="appointment-field"><strong>Phone:</strong> {appt.phone}</div>
-                        <div className="appointment-field"><strong>Email:</strong> {appt.email || 'N/A'}</div>
-                        <div className="appointment-field">
-                          <strong>Service(s):</strong> 
-                          {services.length > 0 ? (
-                            services.map((s, index) => (
-                              <div key={`${appt.id}-${s.type}-${index}`}>
-                                {index + 1}. {s.type} on {s.date}
-                              </div>
-                            ))
-                          ) : (
-                            'N/A'
-                          )}
-                        </div>
-                        <div className="appointment-field">
-                          <strong>AC Type(s):</strong> 
-                          {services.length > 0 ? (
-                            services.map((s, sIndex) => (
-                              <div key={`ac-${appt.id}-${sIndex}`}>
-                                {s.ac_types && s.ac_types.length > 0
-                                  ? s.ac_types.map((ac, acIndex) => `${sIndex + 1}. ${ac}`).join(', ')
-                                  : 'N/A'}
-                              </div>
-                            ))
-                          ) : (
-                            'N/A'
-                          )}
-                        </div>
-                        <div className="appointment-field"><strong>Address:</strong> {appt.complete_address}</div>
-                      </div>
-                      <div className="appointment-actions">
-                        <button 
-                          className="reject-button" 
-                          onClick={() => openRejectModal(appt.id)}
-                          disabled={isLoading}
-                        >
-                          Reject
-                        </button>
-                        <button 
-                          className="accept-button" 
-                          onClick={() => openAcceptModal(appt.id)}
-                          disabled={isLoading}
-                        >
-                          Accept
-                        </button>                        {services.map((service, index) => (
-                          <button
-                            key={`reschedule-${appt.id}-${index}`}
-                            onClick={() => openRescheduleModal(appt.id, service)}
-                            className="reschedule-btn"
-                            title={`Reschedule ${service.type}`}
-                          >
-                            <FaCalendar />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Accepted Appointments Table */}
-        {activeTab === 'accepted' && (
-          <>
-            {acceptedAppointments.length === 0 && !isLoading ? (
-              <p>No accepted appointments available.</p>
-            ) : (
-              <table className="appointments-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Customer</th>
-                    <th>Phone</th>
-                    <th>Email</th>
-                    <th>Service(s)</th>
-                    <th>AC Type(s)</th>
-                    <th>Technician(s)</th>
-                    <th>Address</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {getPaginatedData().map((appointment) => (
-                    <tr key={appointment.id}>
-                      <td>{appointment.id}</td>
-                      <td>{appointment.name}</td>
-                      <td>{appointment.phone}</td>
-                      <td>{appointment.email || 'N/A'}</td>
-                      <td>
-                        {appointment.services 
-                          ? parseServicesFormatted(appointment.services)
-                          : 'N/A'}
-                      </td>
-                      <td>
-                        {appointment.services 
-                          ? parseAcTypes(appointment.services)
-                          : 'N/A'}
-                      </td>
-                      <td>
-                        {appointment.technicians && appointment.technicians.length > 0
-                          ? appointment.technicians.join(', ')
-                          : 'Not assigned'}
-                      </td>
-                      <td>{appointment.complete_address}</td>
-                      <td>
-                        <button
-                          className="complete-button"
-                          onClick={() => openCompleteModal(appointment.id)}
-                          disabled={isLoading}
-                        >
-                          Complete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </>
-        )}
-
-        {/* Pagination Navigation */}
-        {totalPages > 1 && (
-          <div className="pagination-nav">
-            <button 
-              onClick={() => handlePageChange(1)}
-              disabled={currentPage === 1}
-              className="pagination-button"
-            >
-              First
-            </button>
-            <button 
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="pagination-button"
-            >
-              Previous
-            </button>
-            <span className="page-info">
-              Page {currentPage} of {totalPages}
-            </span>
-            <button 
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="pagination-button"
-            >
-              Next
-            </button>
-            <button 
-              onClick={() => handlePageChange(totalPages)}
-              disabled={currentPage === totalPages}
-              className="pagination-button"
-            >
-              Last
-            </button>
-          </div>
-        )}
-
-        {/* Reject Modal */}
-        <Modal
-          isOpen={isConfirmModalOpen}
-          title="Confirm Rejection"
-          message="Are you sure you want to reject this appointment? A notification email will be sent to the customer."
-          onConfirm={handleConfirmReject}
-          onCancel={handleCancelModal}
-          actionType="reject"
+        <PaginationControls
+          itemsPerPage={itemsPerPage}
+          handleItemsPerPageChange={handleItemsPerPageChange}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          handlePageChange={handlePageChange}
         />
 
-        {/* Accept Modal with Technician Assignment */}
-        {isAcceptModalOpen && (
-          <div className="modal-overlay">
-            <div className="modal-content accept-modal">
-              <h3>Accept Appointment</h3>
-              <p>Are you sure you want to accept this appointment? A confirmation email will be sent to the customer.</p>
-              
-              <div className="technician-assignment-section">
-                <h4>Assign Technicians (Optional)</h4>
-                
-                {/* Dropdown for existing technicians */}
-                <div className="technician-dropdown">
-                  <label htmlFor="technician-select">Select from existing technicians:</label>
-                  <select 
-                    id="technician-select"
-                    onChange={handleTechnicianSelect}
-                    defaultValue=""
-                  >
-                    <option value="">-- Select a technician --</option>
-                    {availableTechnicians.map(tech => (
-                      <option key={tech.id} value={tech.name}>
-                        {tech.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Custom technician input */}
-                <div className="custom-technician-input">
-                  <label htmlFor="custom-technician">Add new technician:</label>
-                  <div className="input-group">
-                    <input
-                      id="custom-technician"
-                      type="text"
-                      value={customTechnicianInput}
-                      onChange={(e) => setCustomTechnicianInput(e.target.value)}
-                      onKeyPress={handleCustomTechnicianKeyPress}
-                      placeholder="Enter technician name"
-                    />
-                    <button 
-                      type="button"
-                      onClick={addCustomTechnician}
-                      disabled={!customTechnicianInput.trim()}
-                      className="add-technician-button"
-                    >
-                      Add
-                    </button>
-                  </div>
-                </div>
-
-                {/* Selected technicians display */}
-                {selectedTechnicians.length > 0 && (
-                  <div className="selected-technicians">
-                    <h5>Selected Technicians:</h5>
-                    <div className="technician-tags">
-                      {selectedTechnicians.map((name, index) => (
-                        <span key={index} className="technician-tag">
-                          {name}
-                          <button 
-                            type="button"
-                            onClick={() => removeTechnician(name)}
-                            className="remove-technician"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="modal-actions">
-                <button 
-                  className="modal-confirm-button"
-                  onClick={() => handleAcceptAppointment(selectedAppointmentId)}
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Processing...' : 'Accept Appointment'}
-                </button>
-                <button 
-                  className="modal-cancel-button"
-                  onClick={handleCancelModal}
-                  disabled={isLoading}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Complete Modal */}
-        <Modal
-          isOpen={isCompleteModalOpen}
-          title="Confirm Completion"
-          message="Are you sure you want to mark this appointment as completed?"
-          onConfirm={() => completeAppointment(selectedAppointmentId)}
-          onCancel={handleCancelModal}
-          actionType="complete"
+        <AppointmentList
+          activeTab={activeTab}
+          appointments={appointments}
+          acceptedAppointments={acceptedAppointments}
+          getPaginatedData={getPaginatedData}
+          isLoading={isLoading}
+          openRejectModal={openRejectModal}
+          openAcceptModal={openAcceptModal}
+          openRescheduleModal={openRescheduleModal}
+          openCompleteModal={openCompleteModal}
+          parseServices={parseServices}
+          parseServicesFormatted={parseServicesFormatted}
+          parseAcTypes={parseAcTypes}
         />
 
-        {/* Reschedule Modal */}
-        {isRescheduleModalOpen && (
-          <div className="modal-overlay">
-            <div className="modal-content reschedule-modal">
-              <h3>Reschedule Service</h3>
-              <p>Are you sure you want to reschedule this service to the new date? A notification email will be sent to the customer.</p>
-              <div className="reschedule-details">
-                <p><strong>Appointment ID:</strong> {selectedAppointmentId}</p>
-                <p><strong>Service:</strong> {selectedService}</p>
-                
-                <div className="new-date-input">
-                  <label htmlFor="newServiceDate">New Date:</label>
-                  <div className="input-group">
-                    <input
-                      id="newServiceDate"
-                      type="date"
-                      value={newServiceDate}
-                      onChange={(e) => setNewServiceDate(e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
-                      required
-                      className="datetime-input"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="modal-actions">
-                <button 
-                  className="modal-confirm-button"
-                  onClick={confirmReschedule}
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Processing...' : 'Confirm Reschedule'}
-                </button>
-                <button 
-                  className="modal-cancel-button"
-                  onClick={handleCancelModal}
-                  disabled={isLoading}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <AppointmentModals
+          isConfirmModalOpen={isConfirmModalOpen}
+          isAcceptModalOpen={isAcceptModalOpen}
+          isCompleteModalOpen={isCompleteModalOpen}
+          isRescheduleModalOpen={isRescheduleModalOpen}
+          selectedAppointmentId={selectedAppointmentId}
+          selectedService={selectedService}
+          newServiceDate={newServiceDate}
+          setNewServiceDate={setNewServiceDate}
+          customTechnicianInput={customTechnicianInput}
+          setCustomTechnicianInput={setCustomTechnicianInput}
+          selectedTechnicians={selectedTechnicians}
+          availableTechnicians={availableTechnicians}
+          isLoading={isLoading}
+          handleConfirmReject={handleConfirmReject}
+          handleCancelModal={handleCancelModal}
+          handleAcceptAppointment={handleAcceptAppointment}
+          handleTechnicianSelect={handleTechnicianSelect}
+          handleCustomTechnicianKeyPress={handleCustomTechnicianKeyPress}
+          addCustomTechnician={addCustomTechnician}
+          removeTechnician={removeTechnician}
+          confirmReschedule={confirmReschedule}
+          completeAppointment={completeAppointment}
+        />
       </div>
     </PageWrapper>
   );
