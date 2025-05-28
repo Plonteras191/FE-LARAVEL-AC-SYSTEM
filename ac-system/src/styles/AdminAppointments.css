@@ -3,19 +3,20 @@
 .admin-appointments-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 20px;
+  padding: clamp(16px, 3vw, 24px);
   background-color: #f8fafc;
   min-height: 100vh;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
 .admin-appointments-container h2 {
   color: #1e3a8a;
-  font-size: 2.5rem;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
   font-weight: 700;
-  margin-bottom: 2rem;
+  margin-bottom: clamp(1.5rem, 3vw, 2rem);
   text-align: center;
   position: relative;
+  letter-spacing: -0.02em;
 }
 
 .admin-appointments-container h2::after {
@@ -150,19 +151,21 @@
 /* Appointments List (Card View) */
 .appointments-list {
   display: grid;
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr));
+  gap: clamp(1rem, 2vw, 1.5rem);
   margin-bottom: 2rem;
 }
 
 .appointment-card {
   background-color: #ffffff;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
-  border: 1px solid #e2e8f0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: clamp(12px, 2vw, 16px);
+  padding: clamp(16px, 3vw, 24px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  backdrop-filter: blur(8px);
 }
 
 .appointment-card::before {
@@ -220,18 +223,22 @@
 .accept-button,
 .complete-button,
 .reschedule-btn {
-  padding: 10px 20px;
+  padding: clamp(8px, 1.5vw, 12px) clamp(16px, 2vw, 24px);
   border: none;
   border-radius: 8px;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   position: relative;
   overflow: hidden;
+  min-width: 120px;
+  will-change: transform;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .reject-button {
@@ -390,28 +397,27 @@
 /* Modal Styles */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: grid;
+  place-items: center;
   z-index: 1000;
   backdrop-filter: blur(4px);
+  padding: clamp(16px, 3vw, 24px);
 }
 
 .modal-content {
   background-color: #ffffff;
-  border-radius: 16px;
-  padding: 32px;
-  max-width: 500px;
-  width: 90%;
-  max-height: 90vh;
+  border-radius: clamp(12px, 2vw, 16px);
+  padding: clamp(24px, 4vw, 32px);
+  width: min(500px, 100%);
+  max-height: min(90vh, 800px);
   overflow-y: auto;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
 }
 
 @keyframes modalSlideIn {
@@ -693,7 +699,8 @@
   }
   
   .appointment-info {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+    gap: clamp(12px, 2vw, 16px);
   }
 }
 
@@ -704,53 +711,26 @@
   
   .appointment-tabs {
     flex-direction: column;
+    gap: clamp(4px, 1vw, 8px);
   }
   
   .tab-button {
     text-align: center;
+    padding: clamp(10px, 2vw, 16px);
   }
   
   .pagination-controls {
     flex-direction: column;
-    gap: 16px;
-    text-align: center;
+    gap: clamp(12px, 2vw, 16px);
   }
   
   .appointment-actions {
-    justify-content: center;
+    justify-content: stretch;
+    gap: clamp(8px, 1.5vw, 12px);
   }
   
   .appointments-table {
-    font-size: 0.9rem;
-  }
-  
-  .appointments-table th,
-  .appointments-table td {
-    padding: 12px 8px;
-  }
-  
-  .pagination-nav {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  
-  .pagination-button {
-    padding: 8px 12px;
-    font-size: 0.9rem;
-  }
-  
-  .modal-content {
-    margin: 20px;
-    padding: 24px;
-  }
-  
-  .modal-actions {
-    flex-direction: column;
-  }
-  
-  .modal-confirm-button,
-  .modal-cancel-button {
-    width: 100%;
+    font-size: clamp(0.875rem, 2vw, 0.95rem);
   }
 }
 
@@ -764,7 +744,7 @@
   }
   
   .appointment-card {
-    padding: 16px;
+    padding: clamp(12px, 3vw, 16px);
   }
   
   .appointment-actions {
@@ -773,27 +753,67 @@
   
   .reject-button,
   .accept-button,
-  .complete-button {
+  .complete-button,
+  .reschedule-btn {
     width: 100%;
-    justify-content: center;
   }
   
-  .appointments-table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-  
-  .technician-tags {
+  .modal-actions {
     flex-direction: column;
-    align-items: flex-start;
+    gap: 12px;
   }
   
-  .input-group {
-    flex-direction: column;
-  }
-  
-  .add-technician-button {
+  .modal-confirm-button,
+  .modal-cancel-button {
     width: 100%;
+    padding: clamp(10px, 2vw, 14px);
+  }
+}
+
+/* Modern Scrollbar Styles */
+.modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 3px;
+}
+
+/* Glass Effect for Cards */
+@supports (backdrop-filter: blur(8px)) {
+  .appointment-card {
+    background-color: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
+  }
+  
+  .modal-content {
+    background-color: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+  }
+}
+
+/* Performance Optimizations */
+@media (prefers-reduced-motion: reduce) {
+  .appointment-card,
+  .modal-content,
+  .reject-button,
+  .accept-button,
+  .complete-button,
+  .reschedule-btn {
+    transition: none;
+  }
+  
+  @keyframes modalSlideIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 }

@@ -240,13 +240,13 @@ const Dashboard = () => {
 
   return (
     <PageWrapper>
-      <div className="bg-gray-50 min-h-screen">
+      <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
         {/* Top Navigation Bar */}
-        <div className="bg-white shadow-md border-b border-gray-200 sticky top-0 z-10">
+        <div className="bg-white/80 backdrop-blur-md shadow-lg border-b border-gray-200 sticky top-0 z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <h1 className="text-xl font-bold text-gray-800 flex items-center">
-                <span className="bg-blue-500 text-white p-2 rounded-lg mr-2 hidden sm:inline-flex">
+                <span className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-2 rounded-lg mr-2 hidden sm:inline-flex shadow-md">
                   <FaChartLine className="h-5 w-5" />
                 </span>
                 Admin Dashboard
@@ -255,7 +255,7 @@ const Dashboard = () => {
               {/* Right side controls */}
               <div className="flex items-center space-x-4">
                 {/* Date display */}
-                <div className="hidden md:flex items-center gap-2 text-gray-600">
+                <div className="hidden md:flex items-center gap-2 text-gray-600 bg-gray-50 px-4 py-2 rounded-full shadow-sm">
                   <FaCalendarAlt className="text-blue-500" />
                   <span className="font-medium">
                     {new Date().toLocaleDateString('en-US', {
@@ -270,12 +270,12 @@ const Dashboard = () => {
                 {/* Notification Bell */}
                 <div className="relative" ref={notificationRef}>
                   <button 
-                    className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all relative"
+                    className="p-3 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all relative"
                     onClick={() => setShowNotifications(!showNotifications)}
                   >
                     <FaBell className="text-gray-600 h-5 w-5" />
                     {unreadCount > 0 && (
-                      <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full">
+                      <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-red-500 to-red-600 rounded-full shadow-lg">
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </span>
                     )}
@@ -289,9 +289,9 @@ const Dashboard = () => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
                         transition={{ duration: 0.2 }}
-                        className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl py-2 z-50 border border-gray-200 overflow-hidden"
+                        className="absolute right-0 mt-2 w-80 bg-white/90 backdrop-blur-md rounded-2xl shadow-xl py-2 z-50 border border-gray-200 overflow-hidden"
                       >
-                        <div className="px-4 py-2 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                        <div className="px-4 py-2 border-b border-gray-200 flex justify-between items-center bg-gradient-to-r from-gray-50 to-gray-100">
                           <h3 className="text-sm font-semibold text-gray-700">Notifications</h3>
                           {notifications.length > 0 && (
                             <button 
@@ -332,7 +332,7 @@ const Dashboard = () => {
                 </div>
                 
                 {/* User Profile */}
-                <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white flex items-center justify-center font-medium shadow-sm">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white flex items-center justify-center font-medium shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
                   <FaUser className="h-4 w-4" />
                 </div>
               </div>
@@ -349,20 +349,20 @@ const Dashboard = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.1 }}
-              className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:shadow-md transition-shadow duration-300"
+              className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-gray-200/50 hover:shadow-xl transition-all duration-300 hover:transform hover:-translate-y-1"
             >
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Total Appointments</p>
-                  <h3 className="mt-2 text-3xl font-bold text-gray-900">{stats.total}</h3>
+                  <h3 className="mt-2 text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">{stats.total}</h3>
                 </div>
-                <div className="p-3 bg-blue-100 rounded-lg">
+                <div className="p-3 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl shadow-inner">
                   <FaCalendarAlt className="h-5 w-5 text-blue-600" />
                 </div>
               </div>
               <div className="mt-4">
-                <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-1 bg-blue-500 rounded-full" style={{ width: '100%' }}></div>
+                <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full" style={{ width: '100%' }}></div>
                 </div>
               </div>
             </motion.div>
@@ -372,26 +372,30 @@ const Dashboard = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.2 }}
-              className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:shadow-md transition-shadow duration-300"
+              className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-gray-200/50 hover:shadow-xl transition-all duration-300 hover:transform hover:-translate-y-1"
             >
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Pending</p>
-                  <h3 className="mt-2 text-3xl font-bold text-amber-600">{stats.pending}</h3>
+                  <h3 className="mt-2 text-3xl font-bold bg-gradient-to-r from-amber-600 to-amber-800 bg-clip-text text-transparent">{stats.pending}</h3>
                 </div>
-                <div className="p-3 bg-amber-100 rounded-lg">
+                <div className="p-3 bg-gradient-to-br from-amber-100 to-amber-200 rounded-2xl shadow-inner">
                   <FaClock className="h-5 w-5 text-amber-600" />
                 </div>
               </div>
               <div className="mt-4">
-                <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-1 bg-amber-500 rounded-full" style={{ width: `${stats.total ? Math.round((stats.pending / stats.total) * 100) : 0}%` }}></div>
+                <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-2 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full" 
+                       style={{ width: `${stats.total ? Math.round((stats.pending / stats.total) * 100) : 0}%` }}></div>
                 </div>
               </div>
               {stats.pending > 0 && (
                 <div className="mt-4 pt-3 border-t border-gray-100">
                   <p className="text-xs text-red-600 flex items-center gap-2 font-medium">
-                    <span className="animate-pulse flex h-2 w-2 rounded-full bg-red-500"></span> 
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </span>
                     Requires attention
                   </p>
                 </div>
@@ -403,20 +407,21 @@ const Dashboard = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.3 }}
-              className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:shadow-md transition-shadow duration-300"
+              className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-gray-200/50 hover:shadow-xl transition-all duration-300 hover:transform hover:-translate-y-1"
             >
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Accepted</p>
-                  <h3 className="mt-2 text-3xl font-bold text-green-600">{stats.accepted}</h3>
+                  <h3 className="mt-2 text-3xl font-bold bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent">{stats.accepted}</h3>
                 </div>
-                <div className="p-3 bg-green-100 rounded-lg">
+                <div className="p-3 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl shadow-inner">
                   <FaCheck className="h-5 w-5 text-green-600" />
                 </div>
               </div>
               <div className="mt-4">
-                <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-1 bg-green-500 rounded-full" style={{ width: `${stats.total ? Math.round((stats.accepted / stats.total) * 100) : 0}%` }}></div>
+                <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-2 bg-gradient-to-r from-green-500 to-green-600 rounded-full" 
+                       style={{ width: `${stats.total ? Math.round((stats.accepted / stats.total) * 100) : 0}%` }}></div>
                 </div>
               </div>
             </motion.div>
@@ -426,20 +431,21 @@ const Dashboard = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.4 }}
-              className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:shadow-md transition-shadow duration-300"
+              className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-gray-200/50 hover:shadow-xl transition-all duration-300 hover:transform hover:-translate-y-1"
             >
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Completed</p>
-                  <h3 className="mt-2 text-3xl font-bold text-purple-600">{stats.completed}</h3>
+                  <h3 className="mt-2 text-3xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">{stats.completed}</h3>
                 </div>
-                <div className="p-3 bg-purple-100 rounded-lg">
+                <div className="p-3 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl shadow-inner">
                   <FaCheck className="h-5 w-5 text-purple-600" />
                 </div>
               </div>
               <div className="mt-4">
-                <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-1 bg-purple-500 rounded-full" style={{ width: `${stats.total ? Math.round((stats.completed / stats.total) * 100) : 0}%` }}></div>
+                <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-2 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full" 
+                       style={{ width: `${stats.total ? Math.round((stats.completed / stats.total) * 100) : 0}%` }}></div>
                 </div>
               </div>
             </motion.div>
@@ -449,20 +455,22 @@ const Dashboard = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.5 }}
-              className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:shadow-md transition-shadow duration-300"
+              className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-gray-200/50 hover:shadow-xl transition-all duration-300 hover:transform hover:-translate-y-1"
             >
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm font-medium text-gray-500">{getCurrentMonthName()} Revenue</p>
-                  <h3 className="mt-2 text-3xl font-bold text-sky-600">
+                  <h3 className="mt-2 text-3xl font-bold bg-gradient-to-r from-sky-600 to-sky-800 bg-clip-text text-transparent">
                     ₱{currentMonthRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </h3>
                 </div>
-
+                <div className="p-3 bg-gradient-to-br from-sky-100 to-sky-200 rounded-2xl shadow-inner">
+                  <FaChartLine className="h-5 w-5 text-sky-600" />
+                </div>
               </div>
               <div className="mt-4">
-                <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-1 bg-sky-500 rounded-full" style={{ width: '60%' }}></div>
+                <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-2 bg-gradient-to-r from-sky-500 to-sky-600 rounded-full" style={{ width: '60%' }}></div>
                 </div>
               </div>
             </motion.div>
@@ -473,58 +481,58 @@ const Dashboard = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.6 }}
-            className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 mb-8"
+            className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-8 border border-gray-200/50"
           >
             <h2 className="text-lg font-semibold text-gray-800 mb-6 flex items-center">
-              <span className="bg-indigo-100 p-2 rounded-lg mr-2">
-                <FaChartLine className="h-4 w-4 text-indigo-600" />
+              <span className="bg-gradient-to-br from-indigo-100 to-indigo-200 p-2 rounded-xl mr-2 shadow-inner">
+                <FaChartLine className="h-5 w-5 text-indigo-600" />
               </span>
               Performance Metrics
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {/* Acceptance Rate */}
-              <div className="space-y-3">
+              <div className="space-y-3 bg-gradient-to-br from-blue-50 to-blue-100/50 p-4 rounded-xl">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600 font-medium">Acceptance Rate</span>
-                  <span className="text-sm font-semibold text-gray-900 bg-blue-50 px-2 py-1 rounded">
+                  <span className="text-sm font-semibold text-gray-900 bg-blue-100 px-3 py-1 rounded-lg shadow-inner">
                     {stats.total ? Math.round((stats.accepted / stats.total) * 100) : 0}%
                   </span>
                 </div>
-                <div className="w-full bg-gray-100 rounded-full h-3">
+                <div className="w-full bg-white/50 rounded-full h-3 shadow-inner">
                   <div 
-                    className="bg-blue-600 h-3 rounded-full transition-all duration-500 ease-in-out" 
+                    className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500 ease-in-out shadow-lg" 
                     style={{ width: `${stats.total ? Math.round((stats.accepted / stats.total) * 100) : 0}%` }}
                   ></div>
                 </div>
               </div>
               
               {/* Completion Rate */}
-              <div className="space-y-3">
+              <div className="space-y-3 bg-gradient-to-br from-green-50 to-green-100/50 p-4 rounded-xl">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600 font-medium">Completion Rate</span>
-                  <span className="text-sm font-semibold text-gray-900 bg-green-50 px-2 py-1 rounded">
+                  <span className="text-sm font-semibold text-gray-900 bg-green-100 px-3 py-1 rounded-lg shadow-inner">
                     {stats.total ? Math.round((stats.completed / stats.total) * 100) : 0}%
                   </span>
                 </div>
-                <div className="w-full bg-gray-100 rounded-full h-3">
+                <div className="w-full bg-white/50 rounded-full h-3 shadow-inner">
                   <div 
-                    className="bg-green-600 h-3 rounded-full transition-all duration-500 ease-in-out" 
+                    className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full transition-all duration-500 ease-in-out shadow-lg" 
                     style={{ width: `${stats.total ? Math.round((stats.completed / stats.total) * 100) : 0}%` }}
                   ></div>
                 </div>
               </div>
               
               {/* Rejection Rate */}
-              <div className="space-y-3">
+              <div className="space-y-3 bg-gradient-to-br from-red-50 to-red-100/50 p-4 rounded-xl">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600 font-medium">Rejection Rate</span>
-                  <span className="text-sm font-semibold text-gray-900 bg-red-50 px-2 py-1 rounded">
+                  <span className="text-sm font-semibold text-gray-900 bg-red-100 px-3 py-1 rounded-lg shadow-inner">
                     {stats.total ? Math.round((stats.rejected / stats.total) * 100) : 0}%
                   </span>
                 </div>
-                <div className="w-full bg-gray-100 rounded-full h-3">
+                <div className="w-full bg-white/50 rounded-full h-3 shadow-inner">
                   <div 
-                    className="bg-red-600 h-3 rounded-full transition-all duration-500 ease-in-out" 
+                    className="bg-gradient-to-r from-red-500 to-red-600 h-3 rounded-full transition-all duration-500 ease-in-out shadow-lg" 
                     style={{ width: `${stats.total ? Math.round((stats.rejected / stats.total) * 100) : 0}%` }}
                   ></div>
                 </div>
