@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 import { parseISO, format } from 'date-fns';
+import ReCAPTCHA from "react-google-recaptcha";
 import "react-datepicker/dist/react-datepicker.css";
 import '../styles/index.css';
 import apiClient from '../services/api';
@@ -25,6 +26,8 @@ const Booking = () => {
   const [globalAvailableDates, setGlobalAvailableDates] = useState([]);
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
+  const [recaptchaValue, setRecaptchaValue] = useState(null);
+  const recaptchaRef = useRef();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -90,10 +93,14 @@ const Booking = () => {
       avDate.toDateString() === date.toDateString()
     );
   };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     setFormError(''); // Clear previous form-level errors
+
+    if (!recaptchaValue) {
+      setFormError('Please verify that you are not a robot');
+      return;
+    }
 
     let newErrors = { services: {} };
     let hasErrors = false;
@@ -123,14 +130,13 @@ const Booking = () => {
 
     if (hasErrors) {
       return;
-    }
-
-    const formData = new FormData(e.target);
+    }    const formData = new FormData(e.target);
     const bookingData = {
       name: formData.get('name'),
       phone: formData.get('phone'),
       email: formData.get('email'),
       completeAddress: formData.get('completeAddress'),
+      recaptchaToken: recaptchaValue,
       services: selectedServices.map(service => ({
         type: serviceOptions[service],
         date: serviceDates[service] ? format(serviceDates[service], 'yyyy-MM-dd') : null,
@@ -138,10 +144,12 @@ const Booking = () => {
       }))
     };
 
-    apiClient.post('/booking', bookingData)
-      .then(response => {
+    apiClient.post('/booking', bookingData)      .then(response => {
         console.log("Response from backend:", response.data);
         if (response.data.bookingId) {
+          // Reset reCAPTCHA
+          recaptchaRef.current.reset();
+          setRecaptchaValue(null);
           navigate('/confirmation', { state: bookingData });
         } else {
           setFormError("Error saving booking: " + response.data.message);
@@ -329,18 +337,24 @@ const Booking = () => {
                     Complete Address<span className="text-red-500 ml-1">*</span>
                   </label>
                   <textarea 
-                    id="completeAddress" 
-                    name="completeAddress" 
-                    placeholder="Enter your complete address" 
+                    id="completeAddress"
+                    name="completeAddress"
+                    placeholder="Enter your complete address"
                     required
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 h-24" 
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-none h-24"
                   ></textarea>
                 </div>
               </div>
             )}
 
             {selectedServices.length > 0 && (
-              <div className="mt-8 pt-6 border-t border-gray-100">
+              <div className="mt-8 pt-6 border-t border-gray-100 flex flex-col items-center gap-4">
+                <ReCAPTCHA
+                  ref={recaptchaRef}
+                  sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+                  onChange={(value) => setRecaptchaValue(value)}
+                  className="mb-4"
+                />
                 <button 
                   type="submit"
                   className="w-full md:w-auto bg-sky-600 hover:bg-sky-700 text-white font-medium py-3 px-8 rounded-lg transition-colors focus:outline-none focus:ring-4 focus:ring-sky-300 shadow-md hover:shadow-lg flex items-center justify-center mx-auto"
@@ -354,7 +368,7 @@ const Booking = () => {
             )}
           </div>
         </form>
-      </div>  
+      </div>
     </div>
   );
 };
