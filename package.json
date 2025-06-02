@@ -4,5 +4,8 @@
     "react-toastify": "^11.0.5",
     "recharts": "^2.15.2",
     "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "vite": "^6.3.5"
   }
 }
