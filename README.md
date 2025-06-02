@@ -10,8 +10,7 @@ This README describes how to set up and run the **React + Vite** frontend for th
 - [Prerequisites](#prerequisites)  
 - [Installing Dependencies](#installing-dependencies)    
 - [Running in Development](#running-in-development)  
-- [Building for Production](#building-for-production)  
-- [Troubleshooting](#troubleshooting)  
+- [GITHUB REPO](#GITHUB-REPO)  
 
 ---
 
@@ -35,11 +34,16 @@ Before you begin, confirm that your system has the following installed:
 # Or, if you prefer Yarn:
 # yarn install
 
-3. Running in Development
+## Running in Development
+
+3. Development Start
 # Make sure your Laravel backend is running at http://127.0.0.1:8000.
 # In the terminal (inside ac-system/):
 # npm run dev <= COMMON USED
 # Or, if using Yarn:
 # yarn dev
 # You should see something like this http://localhost:5173/
+
+## GITHUB REPO
+# https://github.com/Plonteras191/FE-LARAVEL-AC-SYSTEM.git
 
